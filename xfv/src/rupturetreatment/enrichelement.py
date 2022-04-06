@@ -11,7 +11,7 @@ from xfv.src.data.enriched_mass_matrix_props import EnrichedMassMatrixProps
 
 class EnrichElement(RuptureTreatment):
     """
-    A treatment that enrich one of the ruptured cells
+    A treatment that enrich one of the ruptured cells with additional dof
     """
     __never_enriched = True
     __debug = False
