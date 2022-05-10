@@ -22,9 +22,9 @@ class LinearData(CohesiveCalculationModel):  # pylint: disable=too-few-public-me
         :param ind: integer for indice of cell
         :cohesive_model: type of cohesive model 
         """
-        critical_strength = abs(stress[ind,0])
-        critical_separation = cohesive_model.critical_separation
-        dissipated_energy = critical_strength*critical_separation*section/2.
+        critical_strength = float(abs(stress[ind,0]))
+        critical_separation = float(cohesive_model.critical_separation)
+        dissipated_energy = float(critical_strength*critical_separation*section/2.)
         print('critical strength =', critical_strength)
         print('critical separation =', critical_separation)
         print('cohesive dissipated energy =', dissipated_energy)
