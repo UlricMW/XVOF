@@ -15,6 +15,10 @@ class YieldStress:  # pylint: disable=too-few-public-methods
         Initialization of the constant yield stress class
 
         :param init_value: initial yield stress
+        :param init_shear_modulus: initial shear modulus
+        :param Y_max: maximal yield stress
+        :param beta: material hardening coefficient
+        :param m: material hardening coefficient
         """
         self.init_value = init_value
         self.init_shear_modulus = init_shear_modulus
@@ -25,8 +29,10 @@ class YieldStress:  # pylint: disable=too-few-public-methods
     @abstractmethod
     def compute(self, density: np.array, strain_plastic_eq, G) -> np.array:
         """
-        Compute the new value of shear modulus
+        Compute the value of the yield stress
 
         :param density: the current density
+        :param strain_plastic_eq: array of the equivalent plastic strain
+        :param G: array of the shear modulus
         :return: the computed yield stress
         """

@@ -17,6 +17,10 @@ class SCGYieldStress(YieldStress):  # pylint: disable=too-few-public-methods
         Initialization of the constant yield stress class
 
         :param init_value: initial yield stress
+        :param init_shear_modulus: initial shear modulus
+        :param Y_max: maximal yield stress
+        :param beta: material hardening coefficient
+        :param m: material hardening coefficient
         """
         super().__init__(init_value, init_shear_modulus, Y_max, beta, m)
         self.init_value = init_value
@@ -30,6 +34,8 @@ class SCGYieldStress(YieldStress):  # pylint: disable=too-few-public-methods
         Compute the value of the yield stress
 
         :param density: the current density
+        :param strain_plastic_eq: array of the equivalent plastic strain
+        :param G: array of the shear modulus
         :return: the computed yield stress
         """
         #print('max epsilon_eq=',max(strain_plastic_eq))

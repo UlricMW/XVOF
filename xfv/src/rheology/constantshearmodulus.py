@@ -16,7 +16,9 @@ class ConstantShearModulus(ShearModulus):  # pylint: disable=too-few-public-meth
         """
         Init of the class
 
-        :param init_value: Value of the shear modulus
+        :param init_value: Value of the initial shear modulus
+        :param init_density: Value of the initial density
+        :param Gp_prime: Value of the Gp prime
         """
         super().__init__(init_value, init_density, Gp_prime)
         self.init_value = init_value
@@ -24,9 +26,10 @@ class ConstantShearModulus(ShearModulus):  # pylint: disable=too-few-public-meth
 
     def compute(self, density: np.array, pressure) -> np.array:
         """
-        Compute the shear modulus => returns constant value of shear modulus
+        Compute the shear modulus => returns SCG value of shear modulus
 
         :param density: the current density
+        :param pressure: the current pressure
         :return: the computed shear modulus
         """
         
