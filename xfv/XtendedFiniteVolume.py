@@ -278,6 +278,8 @@ def main(directory: Path) -> None:
     if data.material_target is not None:
         target_model = data.material_target
         target_porosity_model_bool,target_porosity_model = _build_material_porosity_model(target_model)
+        if target_porosity_model_bool:
+            my_mesh.initialize_evolution_porosity()
 
     # ************************************************* #
     #         DEBUT DE LA BOUCLE EN TEMPS               #

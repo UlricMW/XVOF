@@ -387,7 +387,7 @@ class Cell:  # pylint: disable=too-many-public-methods, too-many-instance-attrib
         """
 
     @abstractmethod
-    def compute_new_porosity(self, time_step, porosity_model, mask):
+    def compute_new_porosity(self, time_step, porosity_model):
         """
         Compute the new porosity according to the porosity model in XDATA
         :param time_step: float

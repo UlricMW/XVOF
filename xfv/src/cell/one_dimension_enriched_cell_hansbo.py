@@ -482,17 +482,22 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
 
     def compute_enriched_elements_new_porosity(self, delta_t, porosity_model):
         """
-        Compute the new porosity according to the porosity model in XDATA
+        Compute the new porosity for the right part of the enriched elements according to the porosity model in XDATA
 
         :param delta_t: model to compute the shear modulus
         :param porosity_model: porosity model to compute
         """
-        mask = self.enriched
+        
+        mask_enr_evol_porosity = np.logical_and(self.evol_porosity, self.enriched)
+        mask_enr_no_evol_porosity = np.logical_and(~self.evol_porosity, self.enriched)
 
-        self._enr_porosity.new_value[mask] = porosity_model.compute_porosity(
+        # Locking porosity for the cells where porosity can't change
+        self._enr_porosity.new_value[mask_enr_no_evol_porosity] = self._enr_porosity.current_value[mask_enr_no_evol_porosity]
+        # Computation porosity for the cells where porosity can change
+        self._enr_porosity.new_value[mask_enr_evol_porosity] = porosity_model.compute_porosity(
             delta_t,
-            self.enr_porosity.current_value[mask],
-            self.enr_pressure.current_value[mask])
+                self.enr_porosity.current_value[mask_enr_evol_porosity],
+                self.enr_pressure.current_value[mask_enr_evol_porosity])
 
     def compute_enriched_elements_new_pressure(self, delta_t):
         """

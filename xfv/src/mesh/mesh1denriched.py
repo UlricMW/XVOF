@@ -127,6 +127,12 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
             self.mass_matrix.compute_correction_mass_matrix_for_cell_500(
                 self.cells.mass, self.mask_last_nodes_of_ref, self.__topology)
 
+    def initialize_evolution_porosity(self):
+        """
+        Initialize evolution of porosity when porosity model is activated
+        """
+        self.cells.compute_initialize_evolution_porosity()
+
     def compute_new_nodes_velocities(self, delta_t: float):
         """
         Computation of nodes velocities at t+dt
@@ -299,7 +305,8 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :param delta_t: time step
         :param porosity_model: model to compute the porosity model
         """
-        self.cells.compute_new_porosity(delta_t, porosity_model, self.cells.classical)
+        # all classical cells ands left part of enriched cells:
+        self.cells.compute_new_porosity(delta_t, porosity_model)
         # right part of enriched cells
         if self.cells.enriched.any():
             # test if any enriched cell in order to avoid error in the Newton initialization
