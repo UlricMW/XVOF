@@ -16,13 +16,14 @@ class ConstantStiffnessUnloading(UnloadingModelBase):  # pylint: disable=too-few
         super().__init__()
         self.slope = slope
 
-    def compute_unloading_reloading_condition(self, disc, new_opening):
+    def compute_unloading_reloading_condition(self, disc, new_opening, cells):
         """
         Compute the cohesive stress in case of unloading or reloading condition
         (new_opening is less than the discontinuity maximal opening
 
         :param disc: discontinuity
         :param new_opening: opening of the discontinuity
+        :param cells: cells
         :return: cohesive stress (float)
         """
         cohesive_force = (disc.history_min_cohesive_force +

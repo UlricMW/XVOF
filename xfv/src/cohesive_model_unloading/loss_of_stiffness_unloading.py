@@ -15,7 +15,7 @@ class LossOfStiffnessUnloading(UnloadingModelBase):  # pylint: disable=too-few-p
         """
         super().__init__()
 
-    def compute_unloading_reloading_condition(self, disc, new_opening):
+    def compute_unloading_reloading_condition(self, disc, new_opening, cells):
         """
         Compute the cohesive stress in case of unloading or reloading condition
         (new_opening is less than the discontinuity maximal opening

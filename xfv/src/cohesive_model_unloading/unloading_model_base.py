@@ -15,7 +15,7 @@ class UnloadingModelBase(metaclass=ABCMeta):  # pylint: disable=too-few-public-m
         """
 
     @abstractmethod
-    def compute_unloading_reloading_condition(self, disc, new_opening):
+    def compute_unloading_reloading_condition(self, disc, new_opening, cells):
         """
         Compute the cohesive stress in case of unloading or reloading condition
         (new_opening is less than the discontinuity maximal opening

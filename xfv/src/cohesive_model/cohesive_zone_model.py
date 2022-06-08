@@ -33,6 +33,13 @@ class CohesiveZoneModel:
         self._cohesive_calculation_model = cohesive_calculation_model
 
     @property
+    def unloading_model(self):  # pylint: disable=invalid-name
+        """
+        unloading model
+        """
+        return self._unloading_model
+
+    @property
     def cohesive_zone_model_name(self):  # pylint: disable=invalid-name
         """
         Cohesive zone model name
@@ -92,7 +99,7 @@ class CohesiveZoneModel:
 
         elif 0. < new_opening < disc.history_max_opening and disc.history_max_opening < disc.critical_separation :
             cohesive_force = \
-                self._unloading_model.compute_unloading_reloading_condition(disc, new_opening)
+                self._unloading_model.compute_unloading_reloading_condition(disc, new_opening, cells)
             disc.dissipated_energy.new_value = disc.critical_strength*disc.history_max_opening/2.
 
         elif disc.history_max_opening <= new_opening < disc.critical_separation :

@@ -23,7 +23,8 @@ from xfv.src.data.cohesive_model_props import (CohesiveZoneModelProps,
                                                TrilinearCohesiveZoneModelProps)
 from xfv.src.data.unloading_model_props import (UnloadingModelProps,
                                                 ConstantStiffnessUnloadingProps,
-                                                LossOfStiffnessUnloadingProps)
+                                                LossOfStiffnessUnloadingProps, 
+                                                CouplingUnloadingProps)
 from xfv.src.data.contact_props import (ContactProps, PenaltyContactProps,
                                         LagrangianMultiplierProps)
 from xfv.src.data.equation_of_state_props import (EquationOfStateProps, MieGruneisenProps)
@@ -390,18 +391,27 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
 
         unloading_model_name = params['unloading-model']['name'].lower()
         unloading_model_slope: Optional[float] = params['unloading-model'].get('slope')
+        coupling_unload_criterion: Optional[float] = params['unloading-model'].get('coupling-unload-criterion')
+        porosity_unload_criterion: Optional[float] = params['unloading-model'].get('porosity-unload-criterion')
+        cohesive_unload_model: Optional[str] = params['unloading-model'].get('cohesive-unload-model').lower()
 
         if unloading_model_name == "progressiveunloading":
             unloading_model_props: UnloadingModelProps = (
                 ConstantStiffnessUnloadingProps(unloading_model_slope))
         elif unloading_model_name == "lossofstiffnessunloading":
             unloading_model_props = LossOfStiffnessUnloadingProps()
+        elif unloading_model_name == "couplingunloading":
+            if cohesive_unload_model != "progressiveunloading" and cohesive_unload_model != "lossofstiffnessunloading":
+                raise ValueError(f"Unknwown unloading model name: {cohesive_unload_model} "
+                             "Please choose among (progressiveunloading, "
+                             " lossofstiffnessunloading)")
+            unloading_model_props = CouplingUnloadingProps(coupling_unload_criterion, porosity_unload_criterion, 
+                                                            unloading_model_slope, cohesive_unload_model)
         else:
             raise ValueError(f"Unknwown unloading model name: {unloading_model_name} "
                              "Please choose among (progressiveunloading, "
-                             " lossofstiffnessunloading)")
-        print('cohesive model is', cohesive_model_name)
-         
+                             " lossofstiffnessunloading, couplingunloading)")
+
         if cohesive_model_name == "lineardata":
             cohesive_strength = params['coefficients']['cohesive-strength']
             critical_separation = params['coefficients']['critical-separation']
