@@ -26,8 +26,9 @@ class LinearEnergy(CohesiveCalculationModel) :  # pylint: disable=too-few-public
         #if cohesive_model.dissipated_energy > energy[ind]*mass[ind]:
         #    raise ValueError("L energie à dissiper par le modèle cohésif est superieure à l'energie interne de la cellule n°"+str(ind))
         critical_strength = float(abs(stress[ind, 0]))
-        critical_separation = float(2.*cohesive_model.dissipated_energy/(critical_strength*section))
+        critical_separation = 2.*cohesive_model.dissipated_energy/(critical_strength*section)
+        dissipated_energy = cohesive_model.dissipated_energy
         print('critical strength =', critical_strength)
         print('critical separation =', critical_separation)
-        print('cohesive dissipated energy =', float(cohesive_model.dissipated_energy))
-        return critical_strength, critical_separation
+        print('cohesive dissipated energy =', dissipated_energy)
+        return critical_strength, critical_separation, dissipated_energy

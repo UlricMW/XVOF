@@ -4,7 +4,7 @@ Definition of CohesiveZoneModel class to manage the cohesive discontinuities
 """
 import numpy as np
 
-from xfv.src.cohesive_model.cohesive_law import CohesiveLaw
+
 from xfv.src.cohesive_model_unloading.unloading_model_base import UnloadingModelBase
 
 
@@ -74,12 +74,13 @@ class CohesiveZoneModel:
         """
         return self._purcentage
 
-    def compute_cohesive_stress(self, disc):
+    def compute_cohesive_stress(self, disc, cells):
         """
         Compute the cohesive force for the current opening of discontinuity according to the
         current discontinuity opening
 
         :param disc: discontinuity
+        :param cells: cells
 
 	    Attention : formule de la dissipation d'energie du modèle cohesif seulement dans le cas de la décharge à zéro
         """
@@ -95,11 +96,11 @@ class CohesiveZoneModel:
             disc.dissipated_energy.new_value = disc.critical_strength*disc.history_max_opening/2.
 
         elif disc.history_max_opening <= new_opening < disc.critical_separation :
-            cohesive_force = disc._cohesive_law.compute_cohesive_force(new_opening)
+            cohesive_force = disc.cohesive_law.compute_cohesive_force(new_opening)
             # Update the discontinuity indicators
             disc.history_max_opening = max(abs(disc.history_max_opening), abs(new_opening))
             disc.history_min_cohesive_force = \
-                disc._cohesive_law.compute_cohesive_force(disc.history_max_opening)
+                disc.cohesive_law.compute_cohesive_force(disc.history_max_opening)
             disc.damage_variable.new_value = new_opening / disc.critical_separation
             disc.dissipated_energy.new_value = disc.critical_strength*disc.history_max_opening/2.
 

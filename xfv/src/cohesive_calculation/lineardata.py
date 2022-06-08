@@ -28,4 +28,4 @@ class LinearData(CohesiveCalculationModel):  # pylint: disable=too-few-public-me
         print('critical strength =', critical_strength)
         print('critical separation =', critical_separation)
         print('cohesive dissipated energy =', dissipated_energy)
-        return critical_strength, critical_separation
+        return critical_strength, critical_separation, dissipated_energy

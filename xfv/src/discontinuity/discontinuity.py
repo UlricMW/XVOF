@@ -5,9 +5,6 @@ A module implementing the Discontinuity class
 import numpy as np
 from xfv.src.fields.field import Field
 from xfv.src.data.enriched_mass_matrix_props import EnrichedMassMatrixProps
-from xfv.src.cohesive_calculation.lineardata import LinearData
-from xfv.src.cohesive_calculation.linearenergy import LinearEnergy
-from xfv.src.cohesive_calculation.linearpercent import LinearPercent
 from xfv.src.cohesive_model.cohesive_law import CohesiveLaw
 
 
@@ -31,7 +28,6 @@ class Discontinuity:
     ruptured_cell_id = np.zeros([], dtype=int)
     in_nodes = np.zeros([], dtype=int)
     out_nodes = np.zeros([], dtype=int)
-
 
 
     def __init__(self, cell_id: int, mask_in_nodes: np.array, mask_out_nodes: np.array,
@@ -98,7 +94,6 @@ class Discontinuity:
             disc.ruptured_cell_id = Discontinuity.ruptured_cell_id[ind]
             disc.in_nodes = Discontinuity.in_nodes[ind]
             disc.out_nodes = Discontinuity.out_nodes[ind]
-            
 
 
         self.__mask_in_nodes = mask_in_nodes
@@ -127,6 +122,7 @@ class Discontinuity:
         self._cohesive_law = []
         self.critical_separation = None
         self.critical_strength = None
+        self.energy_to_be_dissipated = None
 
         # Creation of the enriched mass matrix
         self.mass_matrix_enriched = enriched_mass_matrix_props.build_enriched_mass_matrix_obj()
@@ -223,6 +219,13 @@ class Discontinuity:
         """
         return int(self.ruptured_cell_id[0])
 
+    @property
+    def cohesive_law(self):
+        """
+        Returns the cohesive law of the discontinuity
+        """
+        return self._cohesive_law
+
     def has_mass_matrix_been_computed(self):
         """
         Set the __mass_matrix_updated boolean to True
@@ -245,22 +248,31 @@ class Discontinuity:
         self.discontinuity_opening.new_value = (xd_new - xg_new)[0][0]
 
     def create_cohesive_law(self, cells, section, cohesive_model):
-        if cohesive_model.cohesive_zone_model_name is None :
+        """
+        Compute the cohesive law
+
+        :param cells: cells of material
+        :param section: float for the section of cells
+        :param cohesive_model: class for the cohesive model
+        """
+        if cohesive_model is None:
             return
-        ind = self.ruptured_cell_id
-        self.critical_strength, self.critical_separation = cohesive_model.cohesive_calculation_model.get_values(cells.energy.new_value, cells.stress, cells.mass, section, ind, cohesive_model)
+        ind = self.get_ruptured_cell_id
+
+        if cells.already_enr[ind]:
+            self.energy_to_be_dissipated = cells.cohesive_dissipated_energy[ind]
+            self.critical_strength, self.critical_separation = cohesive_model.cohesive_calculation_model.get_values_dissipated_energy_known(self.energy_to_be_dissipated, 
+                                                                                                                    cells.stress, 
+                                                                                                                    section, ind)
+        else:
+            self.critical_strength, self.critical_separation, self.energy_to_be_dissipated = cohesive_model.cohesive_calculation_model.get_values(cells.energy.new_value, 
+                                                                                                                    cells.stress, cells.mass, 
+                                                                                                                    section, ind, cohesive_model)
         points = np.array([
             [0, self.critical_strength],
             [self.critical_separation, 0]])
         self._cohesive_law = CohesiveLaw(points)
 
-    def compute_critical_value(self, stress, energy):
-        for ind in range(len(Discontinuity.critical_strength)):
-            if abs(Discontinuity.critical_strength[ind]) < 1.e-16:
-                Discontinuity.critical_strength[ind] = abs(stress[Discontinuity.ruptured_cell_id[ind]])
-            if abs(Discontinuity.critical_separation[ind]) < 1.e-16:
-                Discontinuity.critical_separation[ind] = 2*energy[Discontinuity.ruptured_cell_id[ind]]/Discontinuity.critical_strength[ind]
-        
     def reinitialize_kinematics_after_contact(self):
         """
         Set the new velocity to the old one to cancel the increment that has lead to contact

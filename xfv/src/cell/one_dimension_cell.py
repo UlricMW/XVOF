@@ -248,6 +248,12 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         # Solver EOS
         self._solver = NewtonRaphson(self._function_to_vanish)
 
+        # Sauvegarde de l'energie à dissiper via le modèle cohésif
+        self._cohesive_dissipated_energy = np.zeros(self.number_of_cells, dtype=float)
+
+        # Est-ce que la cellule a déja rompu une fois
+        self._already_enr = np.zeros([number_of_elements, ], dtype=np.bool, order='C')
+        self._already_enr[:] = False
 
         # list de Booléens indiquant su la porosité de la cellule peut evoluer ou non
         self._evol_porosity = np.zeros([number_of_elements, ], dtype=np.bool, order='C')
@@ -275,12 +281,34 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         """
         self._evol_porosity[cell_id] = True
     
+    def save_cohesive_energy_to_be_dissipated(self, disc):
+        """
+        Sauvergarde l'energie à dissiper dans le modèle cohésif
+
+        :param disc: list d'une discontinuité
+        """
+        ind = disc.get_ruptured_cell_id
+        self._cohesive_dissipated_energy[ind] = disc.energy_to_be_dissipated
+
     def compute_mass(self):
         """
         Compute mass of the cells
         """
         self._mass = self.size_t * self.data.geometric.section * self.density.current_value
 
+    @property
+    def cohesive_dissipated_energy(self):
+        """
+        Energy to be dissipated in cohesive model
+        """
+        return self._cohesive_dissipated_energy
+
+    @property
+    def already_enr(self):
+        """
+        Cells already enriched once
+        """
+        return self._already_enr
 
     @property
     def evol_porosity(self):

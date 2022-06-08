@@ -30,4 +30,4 @@ class LinearPercent(CohesiveCalculationModel) :  # pylint: disable=too-few-publi
         print('critical strength =', critical_strength)
         print('critical separation =', critical_separation)
         print('cohesive dissipated energy =', dissipated_energy)
-        return critical_strength, critical_separation
+        return critical_strength, critical_separation, dissipated_energy
