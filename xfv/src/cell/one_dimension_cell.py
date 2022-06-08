@@ -248,11 +248,46 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         # Solver EOS
         self._solver = NewtonRaphson(self._function_to_vanish)
 
+
+        # list de Booléens indiquant su la porosité de la cellule peut evoluer ou non
+        self._evol_porosity = np.zeros([number_of_elements, ], dtype=np.bool, order='C')
+
+    def compute_initialize_evolution_porosity(self):
+        """
+        Initialisation de l'evolution de la porosite
+        """
+        print("Porosity activated ! ")
+        self._evol_porosity[:] = True
+
+    def compute_block_porosity(self, cell_id):
+        """
+        Bloque l'évolution de la porosité de la cellule
+
+        :param cell_id: numéro de la cellule
+        """
+        self._evol_porosity[cell_id] = False
+
+    def compute_allow_porosity(self, cell_id):
+        """
+        Permet l'évolution de la porosité de la cellule
+
+        :param cell_id: numéro de la cellule
+        """
+        self._evol_porosity[cell_id] = True
+    
     def compute_mass(self):
         """
         Compute mass of the cells
         """
         self._mass = self.size_t * self.data.geometric.section * self.density.current_value
+
+
+    @property
+    def evol_porosity(self):
+        """
+        Cells which porosity can change
+        """
+        return self._evol_porosity
 
     @property
     def classical(self):
