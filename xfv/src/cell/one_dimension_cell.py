@@ -258,6 +258,10 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         # list de Booléens indiquant su la porosité de la cellule peut evoluer ou non
         self._evol_porosity = np.zeros([number_of_elements, ], dtype=np.bool, order='C')
 
+        # cell devant redevenir classique
+        self._cells_to_be_desenr = np.zeros([number_of_elements, ], dtype=np.bool, order='C')
+        self._cells_to_be_desenr[:] = False
+
     def compute_initialize_evolution_porosity(self):
         """
         Initialisation de l'evolution de la porosite
@@ -290,6 +294,14 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         ind = disc.get_ruptured_cell_id
         self._cohesive_dissipated_energy[ind] = disc.energy_to_be_dissipated
 
+    def indicate_cells_to_be_desenr(self, ind):
+        """
+        Indique la cellule qui doit etre desenrichie
+
+        :param ind: int du numéro de la cellule
+        """
+        self._cells_to_be_desenr[ind] = True
+
     def compute_mass(self):
         """
         Compute mass of the cells
@@ -316,6 +328,13 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         Cells which porosity can change
         """
         return self._evol_porosity
+
+    @property
+    def cells_to_be_desenr(self):
+        """
+        Cells to be desenriched
+        """
+        return self._cells_to_be_desenr
 
     @property
     def classical(self):

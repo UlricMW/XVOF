@@ -68,6 +68,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         # ---------------------------------------------
         self.__ruptured_cells = np.zeros(self.cells.number_of_cells, dtype=np.bool, order='C')
         self.__plastic_cells = np.zeros(self.cells.number_of_cells, dtype=np.bool, order='C')
+        self.__reclassical_cells = np.zeros(self.cells.number_of_cells, dtype=np.bool, order='C')
 
         # Initialize cell fields
         self.cells.initialize_cell_fields(self.nodes.nodes_in_target,
@@ -445,6 +446,17 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
             np.logical_or(self.__ruptured_cells,
                           new_cracked_cells_in_target)  # pylint: disable=assignment-from-no-return
 
+    def get_reclassical_cells(self):
+        """
+        Find the cells where the unload is checked and store them
+        """
+        new_reclassical_cells_in_target = self.cells.cells_to_be_desenr
+        # correction car projectile ne peut pas rompre (et par conséquent ses cellules ne peuvent redevenir classical)
+        new_reclassical_cells_in_target[self.cells.cell_in_projectile] = False
+        self.__reclassical_cells = \
+            np.logical_or(self.__reclassical_cells,
+                          new_reclassical_cells_in_target)  # pylint: disable=assignment-from-no-return
+
     def _get_plastic_cells(self, plastic_criterion, mask):
         """
         Find the cells where the plasticity criterion is checked and store them
@@ -469,6 +481,17 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         treatment.apply_treatment(self.cells, self.__ruptured_cells,
                                   self.nodes, self.__topology, time,
                                    self.cohesive_zone_model, self.nodes.section)
+
+    def cancel_rupture_treatment(self, treatment, time: float):
+        """
+        cancel the rupture treatment on the cells enforcing the rupture criterion
+
+        :param treatment: rupture treatment
+        :param time: simulation time
+        :type treatment: RuptureTreatment
+        """
+        treatment.cancel_treatment(self.cells, self.__reclassical_cells,
+                                  self.nodes, self.__topology, time)
 
     def apply_plasticity(self, delta_t: float, yield_stress_model, plasticity_criterion,
                          mask_mesh: np.array):

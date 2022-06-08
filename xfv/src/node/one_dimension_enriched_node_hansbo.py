@@ -144,6 +144,28 @@ class OneDimensionHansboEnrichedNode(OneDimensionNode):
         disc.enr_coordinates_new[0] = np.copy(self.xtpdt[disc.mask_out_nodes])  # 2-
         disc.enr_coordinates_new[1] = np.copy(self.xtpdt[disc.mask_in_nodes])  # 1+
 
+    def cancel_additional_node_dof(self, disc: Discontinuity):
+        """
+        Annule les ddl enrichis aux noeuds
+        
+        Set the new velocity to the old one to cancel the increment that has lead to contact
+        :param disc: Discontinuity
+        """
+        # Warning : enr_node_2 (2-) has the same velocity / coordinates as node 2 (node out)
+        # Warning : enr_node_1 (1+) has the same velocity / coordinates as node 1 (node in)
+        # Consequence => initialization with array is impossible => node by node initialization
+
+        # Velocity
+        self._umundemi[disc.mask_out_nodes] = np.copy(1./2.*(self.umundemi[disc.mask_out_nodes]+disc.enr_velocity_current[0]))  # 2+
+        self._umundemi[disc.mask_in_nodes] = np.copy(1./2.*(self.umundemi[disc.mask_in_nodes]+disc.enr_velocity_current[1]))  # 1-
+        self._upundemi[disc.mask_out_nodes] = np.copy(1./2.*(self.upundemi[disc.mask_out_nodes]+disc.enr_velocity_new[0]))  # 2+
+        self._upundemi[disc.mask_in_nodes] = np.copy(1./2.*(self.upundemi[disc.mask_in_nodes]+disc.enr_velocity_new[0]))  # 1-
+        print(self._umundemi[disc.mask_out_nodes], self._umundemi[disc.mask_in_nodes], self._upundemi[disc.mask_out_nodes], self._upundemi[disc.mask_in_nodes]) # Coordinates
+        self._xt[disc.mask_out_nodes] = np.copy(self.xt[disc.mask_out_nodes])  # 2+
+        self._xt[disc.mask_in_nodes] = np.copy(self.xt[disc.mask_in_nodes])  # 1-
+        self._xtpdt[disc.mask_out_nodes] = np.copy(self.xtpdt[disc.mask_out_nodes])  # 2+
+        self._xtpdt[disc.mask_in_nodes] = np.copy(self.xtpdt[disc.mask_in_nodes])  # 1-
+
     def reinitialize_kinematics_after_contact(self, disc: Discontinuity):
         """
         Set the new velocity to the old one to cancel the increment that has lead to contact
