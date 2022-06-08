@@ -555,20 +555,20 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
                                                      self.pseudo.new_value[mask])
         self._dt[mask] = delta_t
 
-    def compute_new_porosity(self, delta_t: float, porosity_model, mask):
+    def compute_new_porosity(self, delta_t: float, porosity_model):
         """
-        Compute the new porosity according to the porosity model in XDATA
+        Compute the new porosity for the classical cells+ right parts according to the porosity model in XDATA
 
         :param delta_t: model to compute the shear modulus
         :param porosity_model: porosity model to compute
-        :param mask: mask to identify the cells to be computed
-
-        :type mask: np.array([nbr_cells, 1], dtype=bool)
         """
-        self.porosity.new_value[mask] = porosity_model.compute_porosity(
+        # Computation porosity for the cells where porosity can change
+        self.porosity.new_value[self.evol_porosity] = porosity_model.compute_porosity(
             delta_t,
-            self.porosity.current_value[mask],
-            self.pressure.current_value[mask])
+                self.porosity.current_value[self.evol_porosity],
+                self.pressure.current_value[self.evol_porosity])
+        # Locking porosity for the cells where porosity can't change
+        self.porosity.new_value[~self.evol_porosity] = self.porosity.current_value[~self.evol_porosity]
 
     def compute_shear_modulus(self, shear_modulus_model, mask):
         """
