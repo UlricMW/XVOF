@@ -285,7 +285,8 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :param delta_t: time step
         """
         # all classical cells + left part of enriched cells :
-        self.cells.compute_new_pressure(~self.__ruptured_cells, dt=delta_t)
+        mask_all_cells = np.ones([self.cells.number_of_cells], dtype=bool)
+        self.cells.compute_new_pressure(mask_all_cells, dt=delta_t)
         # right part of enriched cells
         if self.cells.enriched.any():
             # test if any enriched cell in order to avoid error in the Newton initialization
