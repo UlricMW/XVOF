@@ -501,7 +501,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
 
     def compute_enriched_elements_new_pressure(self, delta_t):
         """
-        Compute pressure, internal energy and sound velocity in left and right parts of
+        Compute pressure, internal energy and sound velocity in right parts of
         the enriched elements
 
         :param delta_t: time step
@@ -511,16 +511,8 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         # elasticity or plasticity is activated
         elasticity_activated = (target_model.elasticity_model is not None)
         plasticity_activated = (target_model.plasticity_model is not None)
-
         mask = self.enriched
 
-        if self.data.material_target.porosity_model is not None:
-                (self.enr_density.current_value[mask], self.enr_density.new_value[mask],
-                 self.enr_pressure.current_value[mask]) = self._compute_macro_to_micro_hydro(
-                     self.enr_density.current_value[mask],
-                     self.enr_density.new_value[mask],
-                     self.enr_pressure.current_value[mask],
-                     self.enr_porosity.new_value[mask])
 
         if elasticity_activated or plasticity_activated:
             # Not sure there is cells in the intersection mask_classic / target
@@ -533,6 +525,13 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
                     self.enr_deviatoric_stress_new[mask],
                     self.enr_deviatoric_strain_rate[mask])
 
+        if self.data.material_target.porosity_model is not None:
+                (self.enr_density.current_value[mask], self.enr_density.new_value[mask],
+                 self.enr_pressure.current_value[mask]) = self._compute_macro_to_micro_hydro(
+                     self.enr_density.current_value[mask],
+                     self.enr_density.new_value[mask],
+                     self.enr_pressure.current_value[mask],
+                     self.enr_porosity.new_value[mask])
         # Initialize local parameters :
         density_right = self.enr_density.current_value[mask]
         density_right_new = self.enr_density.new_value[mask]
@@ -542,6 +541,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         energy_right_new = self.enr_energy.new_value[mask]
         pseudo_right = self.enr_artificial_viscosity.current_value[mask]
         cson_right_new = self.enr_sound_velocity.new_value[mask]
+
         # Call EOS :
         energy_new_right_value, pressure_new_right_value, sound_velocity_new_right_value = \
             OneDimensionCell.apply_equation_of_state(
@@ -599,7 +599,9 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         size_right_current = self.right_part_size.current_value[mask]
         size_right_new = self.right_part_size.new_value[mask]
 
+        # density for left part of enriched cells
         self.density.new_value[mask] = density_left * size_left_current / size_left_new
+        # density for right part of enriched cells
         self.enr_density.new_value[mask] = (density_right *
                                             size_right_current / size_right_new)
 
