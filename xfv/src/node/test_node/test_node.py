@@ -70,11 +70,11 @@ class NodeTest(unittest.TestCase):
         np.testing.assert_array_equal(node_2d_a.umundemi, np.array([[-1.2, 2.0],]))
         np.testing.assert_array_equal(node_2d_a.upundemi, np.array([[-1.2, 2.0],]))
 
-    def test_compute_new_coodinates(self):
+    def test_compute_new_coordinates(self):
         """
-        Test de la méthode Node.compute_new_coodinates()
+        Test de la méthode Node.compute_new_coordinates()
         """
-        self.my_node.compute_new_coodinates(np.array([True]), delta_t=0.5e-06)
+        self.my_node.compute_new_coordinates(np.array([True]), delta_t=0.5e-06)
         np.testing.assert_allclose(self.my_node.xtpdt,
                                    np.array([0.49925, 0.0256, -0.09985], ndmin=2))
 
@@ -82,7 +82,7 @@ class NodeTest(unittest.TestCase):
         """
         Test de la mï¿½thode Node.increment()
         """
-        self.my_node.compute_new_coodinates(np.array([True]), delta_t=0.5e-06)
+        self.my_node.compute_new_coordinates(np.array([True]), delta_t=0.5e-06)
         self.my_node.increment()
         np.testing.assert_allclose(self.my_node.xt, np.array([0.49925, 0.0256, -0.09985], ndmin=2))
         np.testing.assert_array_equal(self.my_node.xt, self.my_node.xtpdt)
