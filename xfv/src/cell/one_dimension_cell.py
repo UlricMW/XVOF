@@ -95,7 +95,7 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
 
             if np.isnan(sound_velocity_new_value).any():
                 negative_vson = np.where(np.isnan(sound_velocity_new_value))
-                msg = "Sound speed square < 0 in cells {}\n".format(np.where(negative_vson))
+                msg = "Sound speed square < 0 in cells {}\n".format(negative_vson)
                 msg += "density = {}\n".format(density[negative_vson])
                 msg += "energy = {}\n".format(energy_new_value[negative_vson])
                 msg += "pressure = {}\n".format(pressure_new_value[negative_vson])
@@ -611,7 +611,7 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
         """
         # Computation porosity for the cells where porosity can change
         self.porosity.new_value[self.evol_porosity] = porosity_model.compute_porosity(
-            delta_t,
+                delta_t,
                 self.porosity.current_value[self.evol_porosity],
                 self.pressure.current_value[self.evol_porosity])
         # Locking porosity for the cells where porosity can't change
