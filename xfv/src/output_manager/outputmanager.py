@@ -133,14 +133,15 @@ class OutputManager(metaclass=Singleton):
         """
         node_indexes = slice(0, nodes.number_of_nodes)
         cell_indexes = slice(0, cells.number_of_cells)
-        enriched_cells = np.where(cells.enriched)[0]
+        enriched_cells = np.where(cells.already_enr)[0]
 
         # Node and cell status should always been registered
         self.register_field("NodeStatus", nodes, ("enriched",),  # should always be registered
                             database_names=[database_id], indexes=node_indexes)
         self.register_field("CellStatus", cells, ("enriched",),  # should always be registered
                             database_names=[database_id], indexes=cell_indexes)
-
+        self.register_field("EnrichmentStatus", cells, ("already_enr",),  # should always be registered
+                            database_names=[database_id], indexes=cell_indexes)
         # Classical field registration
         for key in field_list:
             if key in DataContainer().output.variables:  # registration if field is in the dataset

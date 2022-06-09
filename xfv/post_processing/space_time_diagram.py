@@ -21,7 +21,7 @@ def create_figure():
     """
     fig = plt.figure(1)
     plt.xlabel("Coordinates [mm]", fontsize=18)
-    plt.ylabel("Time [mu s]", fontsize=18)
+    plt.ylabel(r"Time [$\mu s$]", fontsize=18)
     if ARGS.gradient:
         the_title = "Space time {:} gradient diagram".format(ARGS.field)
         # Definition of a color map for gradients plot
@@ -67,7 +67,7 @@ def run():
     # ----------------------------------------------------------------
     # Get the final number of created discontinuities
     # ----------------------------------------------------------------
-    final_cell_status = my_hd.extract_field_at_time("CellStatus", my_hd.saved_times[-1])
+    final_cell_status = my_hd.extract_field_at_time("EnrichmentStatus", my_hd.saved_times[-1])
     ruptured_cell_id_before_offset = np.where(final_cell_status)[0]
     ruptured_cell_id_before_offset = np.sort(ruptured_cell_id_before_offset)
     # ----------------------------------------------------------------
@@ -97,7 +97,7 @@ def run():
     # ----------------------------------------------------------------
     if ARGS.verbose:
         print("Plot the color map")
-
+    print('nombre cellules rompues = ', len(ruptured_cell_id_before_offset))
     # Apparition des disc :
     if len(ruptured_cell_id_before_offset) >= 1:
         # Tracé jusqu'au temps d'appartion des disc :

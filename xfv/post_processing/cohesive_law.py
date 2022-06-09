@@ -32,6 +32,8 @@ def run():
     if args.case is None:
         raise ValueError("At least one case is needed. Use -case to specify cases to plot")
 
+    if args.item_ids is None:
+        raise ValueError("At least one item id is needed. Use -item_ids to specify cells to plot. Write a random integer to show id of enriched cells once or 1000 to plot for all cells")
     # ----------------------------------------------------------
     # Prepare figure
     # ----------------------------------------------------------
@@ -104,5 +106,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
+    plt.grid()
     plt.legend(loc="best")
     plt.show()

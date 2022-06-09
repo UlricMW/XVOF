@@ -33,6 +33,9 @@ def run():
     if args.case is None:
         raise ValueError("At least one case is needed. Use -case to specify cases to plot")
 
+    if args.item_ids is None:
+        raise ValueError("At least one item id is needed. Use -item_ids to specify cells to plot. Write random integer to show enriched cells once")
+
     # ----------------------------------------------------------
     # Prepare figure
     # ----------------------------------------------------------
@@ -73,7 +76,6 @@ def run():
             args.item_ids[0] = []
             args.item_ids[0] = dissipated_energy[:,0]
         
-
         #Transformation en array
         for key in dissipated_energy_dict:
             dissipated_energy_dict[key] = np.array(dissipated_energy_dict[key])
@@ -90,7 +92,7 @@ def run():
                 print(dissipated_energy[:, 0])
                 exit(f'item_ids selectionné ne fait pas parti de la liste des cellules enrichies. Choississez item_ids (ie. le numéro de cellules) dans la liste ci-dessus ou tapez 1000 pour selectionner toutes les cellules')
             # Plot field :
-            plt.plot(dissipated_energy_dict[item_id][:,0],dissipated_energy_dict[item_id][:,1],label= 'cell n°'+str(item_id))
+            plt.plot(dissipated_energy_dict[item_id][:,0], dissipated_energy_dict[item_id][:,1], label= 'cell n°'+str(item_id))
             if args.write_data:
                 data_path = f"Field_evolution_cohesive_dissipated_energy_at_cell_{item_id}.dat"
                 with open(data_path, "w") as file_object:
@@ -103,5 +105,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
+    plt.grid()
     plt.legend(loc="right")
     plt.show()

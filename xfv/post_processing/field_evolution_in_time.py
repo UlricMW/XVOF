@@ -4,6 +4,7 @@ Plot time evolution of a field for a given item id
 """
 
 import argparse
+from os import read
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -56,7 +57,7 @@ def run():
     field_unit["YieldStress"] = "[$Pa$]"
     
     plt.figure(1)
-    plt.xlabel("Time [mus]")
+    plt.xlabel(r"Time [$\mu s$]")
     plt.ylabel(field + field_unit[field])
 
     # ----------------------------------------------------------
@@ -71,8 +72,12 @@ def run():
             print("Read field " + field + " in database... ")
         # Permet de selectionner les items ids de toutes les cellules
         if args.item_ids[0][0] == 1000:
+            print('indiquez la première cellule de la plage à afficher :')
+            number_cells1 = int(input())
+            print('indiquez la deuxième cellule de la plage à afficher :')
+            number_cells2 = int(input())
             args.item_ids[0] = []
-            args.item_ids[0] = [i for i in range(350,734)]
+            args.item_ids[0] = [i for i in range(number_cells1, number_cells2+1)]
 
         for item_id in args.item_ids[0]:
             # Read database :
@@ -96,5 +101,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
+    plt.grid()
     plt.legend(loc="best")
     plt.show()
