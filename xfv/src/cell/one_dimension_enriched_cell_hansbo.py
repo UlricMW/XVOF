@@ -924,7 +924,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         # Porosity
         self._enr_porosity.increment_values()
 
-    def compute_new_coordinates(self, topology, node_coord):
+    def compute_enriched_elements_new_coordinates(self, topology, node_coord, disc_opening):
         """
         Compute the coordinates of the cell center
         :param topology : mesh connectivity
@@ -934,7 +934,8 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         mask = self.enriched
         self._coordinates_x = node_coord[:-1, 0] + self.size_t_plus_dt / 2.
         cell_coord_from_right = node_coord[1:, 0] - self.size_t_plus_dt / 2.
-        self._coordinates_x[mask] += (- self.size_t_plus_dt[mask]
+        self._coordinates_x[mask] += (- self.size_t_plus_dt[mask] - disc_opening[mask]
                                       + self._left_part_size.new_value[mask]) / 2.
         self._enr_coordinates_x[mask] = cell_coord_from_right[mask] + \
-            (self.size_t_plus_dt[mask] - self._right_part_size.new_value[mask]) / 2.
+            (self.size_t_plus_dt[mask] - self._right_part_size.new_value[mask] \
+                + disc_opening[mask]) / 2.
