@@ -36,7 +36,7 @@ class ConstantStiffnessUnloadingTest(unittest.TestCase):
         """
         self.disc.history_min_cohesive_force = 40.
         self.disc.history_max_opening = 2.
-        result = self.test_unloading_model.compute_unloading_reloading_condition(self.disc, 0.5)
+        result = self.test_unloading_model.compute_unloading_reloading_condition(self.disc, 0.5, None)
         expected = 25.
         self.assertEqual(result, expected)
 
