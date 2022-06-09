@@ -335,9 +335,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         Computation of cohesive forces at t+dt
         """
         if self.cohesive_zone_model is not None:
-            self.nodes.compute_enriched_nodes_cohesive_forces(self.cohesive_zone_model,
-                                                              self.cells.stress[:,0],
-                                                self.cells.energy.new_value)
+            self.nodes.compute_enriched_nodes_cohesive_forces(self.cohesive_zone_model, self.cells)
 
     def increment(self):
         """
