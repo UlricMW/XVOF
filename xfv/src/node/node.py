@@ -173,7 +173,7 @@ class Node:
         message += "==> force = {}".format(self.force[index])
         print(message)
 
-    def compute_new_coodinates(self, mask: np.array, delta_t: float):
+    def compute_new_coordinates(self, mask: np.array, delta_t: float):
         """
         Calcul de la coordonnée au temps t+dt
 

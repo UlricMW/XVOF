@@ -242,7 +242,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
                 # to occur on the boundary cells. Thus, no boundary conditions is applied
 
                 # Apply correction on the node coordinates (only on disc nodes)
-                self.nodes.compute_new_coodinates(disc.mask_disc_nodes, delta_t)  # classical
+                self.nodes.compute_new_coordinates(disc.mask_disc_nodes, delta_t)  # classical
                 self.nodes.enriched_nodes_compute_new_coordinates(disc, delta_t)  # enriched
                 disc.compute_discontinuity_new_opening(self.nodes.xtpdt)
 
@@ -253,7 +253,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :param delta_t: time step
         """
         mask_all_nodes = np.ones([self.nodes.number_of_nodes], dtype=bool)
-        self.nodes.compute_new_coodinates(mask_all_nodes, delta_t)
+        self.nodes.compute_new_coordinates(mask_all_nodes, delta_t)
         for disc in Discontinuity.discontinuity_list():
             self.nodes.enriched_nodes_compute_new_coordinates(disc, delta_t)
             # Update discontinuity opening
