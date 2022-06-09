@@ -386,6 +386,14 @@ def main(directory: Path) -> None:
         my_mesh.compute_new_nodes_forces()
         my_mesh.compute_new_cohesive_forces()
         # ---------------------------------------------#
+        #                CANCEL RUPTURE                #
+        # ---------------------------------------------#
+        if rupture_treatment is not None:
+            if data.material_target.cohesive_model is not None:
+                if data.material_target.cohesive_model.unloading_model.unloading_model_name == "coupling_unloading":
+                    my_mesh.get_reclassical_cells()
+                    my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time)
+        # ---------------------------------------------#
         #         LOADING                              #
         # ---------------------------------------------#
         if left_boundary_condition.is_pressure():
