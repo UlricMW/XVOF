@@ -630,8 +630,12 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
 
         with open(self._datafile_dir / coefficients_file, 'r') as json_fid:
             coef = json.load(json_fid)
-            yield_stress = float(coef[params.get('plasticity-model')]["yield_stress"])
-            shear_modulus = float(coef[params.get('plasticity-model')]["shear_modulus"])
+            try:
+                coeff_params = coef[params.get('plasticity-model')]
+            except:
+                coeff_params = coef['EPP']
+            yield_stress = float(coeff_params["yield_stress"])
+            shear_modulus = float(coeff_params["shear_modulus"])
         return yield_stress, shear_modulus
 
     def __get_initial_porosity(self, matter)->float:
