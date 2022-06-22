@@ -90,7 +90,7 @@ def run():
             # Plot field :
             plt.plot(opening_dict[item_id][:,0] * 1.e+6,opening_dict[item_id][:,1],label= 'cell n°'+str(item_id))
             if args.write_data:
-                data_path = f"Field_evolution_cohesive_dissipated_energy_at_cell_{item_id}.dat"
+                data_path = f"Field_evolution_discontinuity_at_cell_{item_id}.dat"
                 with open(data_path, "w") as file_object:
                     for x_data, y_data in zip(opening_dict[item_id][:,0], opening_dict[item_id][:,1]):
                         file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
