@@ -130,7 +130,7 @@ class EnrichElement(RuptureTreatment):
         cells.size_t_plus_dt[cell_tb_desenr] = cells.right_part_size.new_value[cell_tb_desenr] + cells.left_part_size.new_value[cell_tb_desenr] + disc.discontinuity_opening.new_value[0]
         cells.size_t[cell_tb_desenr] = cells.right_part_size.current_value[cell_tb_desenr] + cells.left_part_size.current_value[cell_tb_desenr] + disc.discontinuity_opening.current_value[0]
 
-    def cancel_treatment(self, cells, reclassical_cells, nodes, topology, time):
+    def cancel_treatment(self, cells, reclassical_cells, nodes, topology, time, delta_t, yield_stress_model, shear_modulus_model):
         """
         Cancel the rupture treatment by enriching one of the cells that is marked as ruptured cells
 
@@ -180,8 +180,14 @@ class EnrichElement(RuptureTreatment):
                             cells.cohesive_dissipated_energy[cell_tb_desenr] = disc.energy_to_be_dissipated - disc.dissipated_energy.new_value
                             # Initialisation de la partie droite des champs + cell size
                             self.cancel_cracked_cell_size(cells, cell_tb_desenr, disc)
-                            cells.cancel_additional_cell_dof(disc)
                             nodes.cancel_additional_node_dof(disc)
+                            cells.cancel_additional_cell_dof(disc, delta_t, yield_stress_model, shear_modulus_model)
+                            enr_cell = disc.get_ruptured_cell_id
+                            mask_enr_cell = np.zeros([cells.number_of_cells], dtype=bool)
+                            mask_enr_cell[enr_cell] = True
+                            cells.compute_deviatoric_stress_tensor(mask_enr_cell, topology,
+                                                    nodes.xtpdt, nodes.upundemi, delta_t)
+                            cells.reclassical_pressure(disc, delta_t)
                             exit
 
                     bool_no_disc_ind = list(range(0,len(Discontinuity.discontinuity_list())))

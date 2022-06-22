@@ -155,64 +155,65 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         self._enr_equivalent_plastic_strain_rate[enr_cell] = \
             np.copy(self._equivalent_plastic_strain_rate[enr_cell])
 
-    def cancel_additional_cell_dof(self, disc: Discontinuity):
+    def cancel_additional_cell_dof(self, disc: Discontinuity, delta_t, yield_stress_model, shear_modulus_model):
         """
         Values to initialize the right part fields when discontinuity disc is created
 
         :param disc: the current discontinuity
         """
         enr_cell = disc.get_ruptured_cell_id
+        mask_enr_cell = np.zeros([self.cells.number_of_cells], dtype=bool)
+        mask_enr_cell[enr_cell] = True
         # Initialization of the current field value
+
+        # Initialisation de la densité
         self.density.current_value[enr_cell] = \
             self.mass[enr_cell]/(self.size_t[enr_cell]*self.data.geometric.section)
-        self.pressure.current_value[enr_cell] = \
-            1./2.*(self.pressure.current_value[enr_cell]+self.enr_pressure.current_value[enr_cell])
-        self.sound_velocity.current_value[enr_cell] = \
-            1./2.*(self.sound_velocity.current_value[enr_cell]+self.enr_sound_velocity.current_value[enr_cell])
-        self.energy.current_value[enr_cell] = \
-            1./2.*(self.energy.current_value[enr_cell]+self.enr_energy.current_value[enr_cell])
-        self.pseudo.current_value[enr_cell] = \
-            1./2.*(self.pseudo.current_value[enr_cell]+self.enr_artificial_viscosity.current_value[enr_cell])
-        self._enr_deviatoric_stress_current[enr_cell] = \
-            1./2.*(self._deviatoric_stress_current[enr_cell]+self.enr_deviatoric_stress_current[enr_cell])
-        self.shear_modulus.current_value[enr_cell] = \
-            1./2.*(self.shear_modulus.current_value[enr_cell]+self.enr_shear_modulus.current_value[enr_cell])
-        self.yield_stress.current_value[enr_cell] = \
-            1./2.*(self.yield_stress.current_value[enr_cell]+self.enr_yield_stress.current_value[enr_cell])
-        self.equivalent_plastic_strain.current_value[enr_cell] = \
-            1./2.*(self.equivalent_plastic_strain.current_value[enr_cell]+self.enr_equivalent_plastic_strain.current_value[enr_cell])
-        self.porosity.current_value[enr_cell] = 1./2.*(self.porosity.current_value[enr_cell]+self.enr_porosity.current_value[enr_cell])
-
-        # Initialization of new value field
-        # (so that the current value is not erased if the field is not updated in current step)
         self.density.new_value[enr_cell] = \
             self.mass[enr_cell]/(self.size_t_plus_dt[enr_cell]*self.data.geometric.section)
-        print('initialisation density 50 = ', self.density.new_value[enr_cell])
-        print('init size =', self.size_t_plus_dt[enr_cell])
-        self.pressure.new_value[enr_cell] = \
-            1./2.*(self.pressure.new_value[enr_cell]+self.enr_pressure.new_value[enr_cell])
-        self.sound_velocity.new_value[enr_cell] = \
-            1./2.*(self.sound_velocity.new_value[enr_cell]+self.enr_sound_velocity.new_value[enr_cell])
-        self.energy.new_value[enr_cell] = \
-            1./2.*(self.energy.new_value[enr_cell]+self.enr_energy.new_value[enr_cell])
-        self.pseudo.new_value[enr_cell] = \
-            1./2.*(self.pseudo.new_value[enr_cell]+self.enr_artificial_viscosity.new_value[enr_cell])
+
+        # Calcul de la porosité
+        self.porosity.new_value[enr_cell] = self.size_t_plus_dt/(self.size_t_plus_dt-disc.discontinuity_opening)
+        self.porosity.current_value[enr_cell] = self.size_t/(self.size_t-disc.discontinuity_opening)
+
+        # Calcul nouvelle pseudo viscosité 
+        self.compute_new_pseudo(delta_t, mask_enr_cell)
+
+        # Calcul module de cisaillement
+        self.compute_shear_modulus(shear_modulus_model, mask_enr_cell)
+
+        # Calcul yield stress
+        self.compute_yield_stress(yield_stress_model, mask_enr_cell)
+
+        # Calcul deviatoric stress
+        self._enr_deviatoric_stress_current[enr_cell] = \
+            1./2.*(self._deviatoric_stress_current[enr_cell]+self.enr_deviatoric_stress_current[enr_cell])
         self._enr_deviatoric_stress_new[enr_cell] = \
             1./2.*(self._deviatoric_stress_new[enr_cell]+self.enr_deviatoric_stress_new[enr_cell])
-        self.shear_modulus.new_value[enr_cell] = \
-            1./2.*(self.shear_modulus.new_value[enr_cell]+self.enr_shear_modulus.new_value[enr_cell])
-        self.yield_stress.new_value[enr_cell] = \
-            1./2.*(self.yield_stress.new_value[enr_cell]+self.enr_yield_stress.new_value[enr_cell])
+
+        # Calcul deformation plastique equivalente
+        self.equivalent_plastic_strain.current_value[enr_cell] = \
+            1./2.*(self.equivalent_plastic_strain.current_value[enr_cell]+self.enr_equivalent_plastic_strain.current_value[enr_cell])
         self.equivalent_plastic_strain.new_value[enr_cell] = \
             1./2.*(self.equivalent_plastic_strain.new_value[enr_cell]+self.enr_equivalent_plastic_strain.new_value[enr_cell])
-        self.porosity.new_value[enr_cell] = 1./2.*(self.porosity.new_value[enr_cell]+self.enr_porosity.new_value[enr_cell])
 
         # Other quantities initialization
-        self._deviatoric_strain_rate[enr_cell] = \
-            1./2.*(self._deviatoric_strain_rate[enr_cell] + self.enr_deviatoric_strain_rate[enr_cell])
-        self._stress[enr_cell] = 1./2.*(self._enr_stress[enr_cell]+self._stress[enr_cell])
-        self._equivalent_plastic_strain_rate[enr_cell] = \
-            1./2.*(self._equivalent_plastic_strain_rate[enr_cell]+self._enr_equivalent_plastic_strain_rate[enr_cell])
+        #self._deviatoric_strain_rate[enr_cell] = \
+        #    1./2.*(self._deviatoric_strain_rate[enr_cell] + self.enr_deviatoric_strain_rate[enr_cell])
+        #self._stress[enr_cell] = 1./2.*(self._enr_stress[enr_cell]+self._stress[enr_cell])
+        #self._equivalent_plastic_strain_rate[enr_cell] = \
+        #    1./2.*(self._equivalent_plastic_strain_rate[enr_cell]+self._enr_equivalent_plastic_strain_rate[enr_cell])
+
+        # Calcul energie interne & pression
+        #self.compute_new_pressure(self, mask_enr_cell, delta_t)
+
+    def reclassical_pressure(self, disc, delta_t):
+        enr_cell = disc.get_ruptured_cell_id
+        mask_enr_cell = np.zeros([self.cells.number_of_cells], dtype=bool)
+        mask_enr_cell[enr_cell] = True
+        # Calcul energie interne & pression
+        self.compute_new_pressure(self, mask_enr_cell, delta_t)
+
 
     def reconstruct_enriched_hydro_field(self, classical_field: Field, enriched_field_name: str):
         """

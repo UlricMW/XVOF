@@ -392,7 +392,7 @@ def main(directory: Path) -> None:
             if data.material_target.cohesive_model is not None:
                 if data.material_target.cohesive_model.unloading_model.unloading_model_name == "coupling_unloading":
                     my_mesh.get_reclassical_cells()
-                    my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time)
+                    my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time, dt, target_yield_stress, target_shear_modulus)
         # ---------------------------------------------#
         #         LOADING                              #
         # ---------------------------------------------#
