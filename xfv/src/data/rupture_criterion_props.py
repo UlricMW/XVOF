@@ -107,7 +107,7 @@ class NonLocalStressCriterionProps(RuptureCriterionProps):
 class DoubleCriterionProps(RuptureCriterionProps):
     p_limit: Optional[float]
     number_cell: Optional[int]  # optional to personalize the error message
-
+    criterion_name: Optional[str]
     _rupture_criterion_class = DoubleCriterion
 
     def __post_init__(self):

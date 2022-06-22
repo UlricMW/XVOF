@@ -393,7 +393,6 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         unloading_model_slope: Optional[float] = params['unloading-model'].get('slope')
         coupling_unload_criterion: Optional[float] = params['unloading-model'].get('coupling-unload-criterion')
         porosity_unload_criterion: Optional[float] = params['unloading-model'].get('porosity-unload-criterion')
-        cohesive_unload_model: Optional[str] = params['unloading-model'].get('cohesive-unload-model').lower()
 
         if unloading_model_name == "progressiveunloading":
             unloading_model_props: UnloadingModelProps = (
@@ -401,6 +400,7 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         elif unloading_model_name == "lossofstiffnessunloading":
             unloading_model_props = LossOfStiffnessUnloadingProps()
         elif unloading_model_name == "couplingunloading":
+            cohesive_unload_model: Optional[str] = params['unloading-model']['cohesive-unload-model'].lower()
             if cohesive_unload_model != "progressiveunloading" and cohesive_unload_model != "lossofstiffnessunloading":
                 raise ValueError(f"Unknwown unloading model name: {cohesive_unload_model} "
                              "Please choose among (progressiveunloading, "
@@ -412,11 +412,23 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
                              "Please choose among (progressiveunloading, "
                              " lossofstiffnessunloading, couplingunloading)")
 
-        if cohesive_model_name == "lineardata":
+        if cohesive_model_name == "lineardata" or cohesive_model_name == 'linear':
             cohesive_strength = params['coefficients']['cohesive-strength']
             critical_separation = params['coefficients']['critical-separation']
             purcentage_internal_energy = 0.
             dissipated_energy = 0.
+            failure_data = matter.get('failure')
+            failure_criterion_data = failure_data['failure-criterion']
+            fail_crit_name: str = failure_criterion_data['name']
+            if fail_crit_name == "DoubleCriterion":
+                if failure_criterion_data['criterion-name'].lower()!='maximalstresscriterion':
+                    raise ValueError(f" failure criterion = {fail_crit_name}. "
+                             "Please choose for failure criterion = Double Criterion and cohesive law = linearData "
+                             "maximalstresscriterion as  criterion-name")
+            elif fail_crit_name != "NonLocalStress" and fail_crit_name != "MaximalStress":
+                raise ValueError(f" failure criterion = {fail_crit_name}. "
+                             "Please choose for cohesive law = linearData "
+                             "among (MaximalStress or NonLocalStress")
             cohesive_model_props = LinearDataCohesiveZoneModelProps(cohesive_strength, critical_separation,
                                                                 cohesive_model_name, unloading_model_props, dissipated_energy, purcentage_internal_energy)
         elif cohesive_model_name == "linearenergy":
@@ -497,8 +509,9 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
                     maximal_porosity_for_johnson = fail_crit_value
                     print('maximal porosity = ', maximal_porosity_for_johnson)
                 elif fail_crit_name == 'DoubleCriterion':
-                    maximal_porosity_for_johnson = failure_criterion_data.get('value-one')
-                    print('maximal porosity = ', maximal_porosity_for_johnson)
+                    if failure_criterion_data['criterion-name'].lower()=='porositycriterion':
+                        maximal_porosity_for_johnson = failure_criterion_data.get('criterion-value')
+                        print('maximal porosity = ', maximal_porosity_for_johnson)
 
                 porosity_model_props: PorosityModelProps = JohnsonModelProps(
                     initial_porosity_for_johnson,
@@ -687,7 +700,7 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             coef = coef["InitThermo"]
             rho_0 = float(coef["initial_density"])
         params = matter.get('rheology')
-        if params is None:
+        if not params:
             return None, None, None
         coefficients_file = params.get('coefficients')
         with open(self._datafile_dir / coefficients_file, 'r') as json_fid:
@@ -805,13 +818,18 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             radius: Optional[int] = failure_criterion_data.get('radius')
             failure_criterion = NonLocalStressCriterionProps(fail_crit_value, radius)
         elif fail_crit_name == 'DoubleCriterion':
-            value_one : Optional[float] = failure_criterion_data.get('value-one')
-            value_two : Optional[int] = failure_criterion_data.get('value-two')
-            failure_criterion = DoubleCriterionProps(value_one, value_two)
+            criterion_value : Optional[float] = failure_criterion_data.get('criterion-value')
+            cell_id : Optional[int] = failure_criterion_data.get('cell-id')
+            criterion_name : Optional[str] = failure_criterion_data['criterion-name'].lower()
+            failure_criterion = DoubleCriterionProps(criterion_value, cell_id, criterion_name)
+            if criterion_name != "porositycriterion" and criterion_name != "maximalstresscriterion":
+                raise ValueError(f"Unknown failure criterion {criterion_name}. "
+                             "Please choose among (PorosityCriterion, MaximalStressCriterion")      
         else:
             raise ValueError(f"Unknown failure criterion {fail_crit_name}. "
                              "Please choose among (MinimumPressure, Damage, "
-                             "HalfRodComparison, MaximalStress")
+                             "Porosity, HalfRodComparison, MaximalStress, "
+                             "NonLocalStress, DoubleCriterion)")
 
         return failure_criterion, fail_crit_value, failure_cell_index
 
