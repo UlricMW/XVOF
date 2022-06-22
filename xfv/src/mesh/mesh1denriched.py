@@ -292,8 +292,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :param delta_t: time step
         """
         # all classical cells + left part of enriched cells :
-        mask_all_cells = np.ones([self.cells.number_of_cells], dtype=bool)
-        self.cells.compute_new_pressure(mask_all_cells, dt=delta_t)
+        self.cells.compute_new_pressure(~self.__ruptured_cells, dt=delta_t)
         # right part of enriched cells
         if self.cells.enriched.any():
             # test if any enriched cell in order to avoid error in the Newton initialization
@@ -480,7 +479,7 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
                                   self.nodes, self.__topology, time,
                                    self.cohesive_zone_model, self.nodes.section)
 
-    def cancel_rupture_treatment(self, treatment, time: float):
+    def cancel_rupture_treatment(self, treatment, time: float, delta_t, yield_stress_model, shear_modulus_model):
         """
         cancel the rupture treatment on the cells enforcing the rupture criterion
 
@@ -489,7 +488,8 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :type treatment: RuptureTreatment
         """
         treatment.cancel_treatment(self.cells, self.__reclassical_cells,
-                                  self.nodes, self.__topology, time)
+                                  self.nodes, self.__topology, time, 
+                                  delta_t, yield_stress_model, shear_modulus_model)
 
     def apply_plasticity(self, delta_t: float, yield_stress_model, plasticity_criterion,
                          mask_mesh: np.array):
