@@ -40,19 +40,19 @@ class CouplingUnloading(UnloadingModelBase):  # pylint: disable=too-few-public-m
         """
         cell_id = disc.get_ruptured_cell_id
         if new_opening > self.coupling_unload_criterion:
-            print('a pour cellule ', cell_id)
+            #print('a pour cellule ', cell_id)
             cells.compute_block_porosity(cell_id)
             cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
         elif self.porosity_unload_criterion < new_opening <= self.coupling_unload_criterion :
-            print('b pour cellule ', cell_id)
+            #print('b pour cellule ', cell_id)
             cells.compute_allow_porosity(cell_id)
             cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
-        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] >= 1.05:
-            print('c pour cellule ', cell_id)
+        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] >= 1.04:
+            #print('c pour cellule ', cell_id)
             cells.compute_allow_porosity(cell_id)
             cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
-        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] < 1.05:
-            print('d pour cellule ', cell_id)
+        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] < 1.04:
+            #print('d pour cellule ', cell_id)
             cells.compute_allow_porosity(cell_id)
             cells.indicate_cells_to_be_desenr(cell_id)
             cells.save_cohesive_energy_to_be_dissipated(disc)

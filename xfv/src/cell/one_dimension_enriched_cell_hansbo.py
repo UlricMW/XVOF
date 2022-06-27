@@ -162,7 +162,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         :param disc: the current discontinuity
         """
         enr_cell = disc.get_ruptured_cell_id
-        mask_enr_cell = np.zeros([self.cells.number_of_cells], dtype=bool)
+        mask_enr_cell = np.zeros([self.number_of_cells], dtype=bool)
         mask_enr_cell[enr_cell] = True
         # Initialization of the current field value
 
@@ -173,8 +173,10 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
             self.mass[enr_cell]/(self.size_t_plus_dt[enr_cell]*self.data.geometric.section)
 
         # Calcul de la porosité
-        self.porosity.new_value[enr_cell] = self.size_t_plus_dt/(self.size_t_plus_dt-disc.discontinuity_opening)
-        self.porosity.current_value[enr_cell] = self.size_t/(self.size_t-disc.discontinuity_opening)
+        denominateur_new_value = self.left_part_size.new_value[enr_cell]/self.porosity.new_value[enr_cell] + self.right_part_size.new_value[enr_cell]/self.enr_porosity.new_value[enr_cell]
+        denominateur_current_value = self.left_part_size.current_value[enr_cell]/self.porosity.current_value[enr_cell] + self.right_part_size.current_value[enr_cell]/self.enr_porosity.current_value[enr_cell]
+        self.porosity.new_value[enr_cell] = self.size_t_plus_dt[enr_cell]/denominateur_new_value
+        self.porosity.current_value[enr_cell] = self.size_t[enr_cell]/denominateur_current_value
 
         # Calcul nouvelle pseudo viscosité 
         self.compute_new_pseudo(delta_t, mask_enr_cell)
@@ -209,10 +211,10 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
 
     def reclassical_pressure(self, disc, delta_t):
         enr_cell = disc.get_ruptured_cell_id
-        mask_enr_cell = np.zeros([self.cells.number_of_cells], dtype=bool)
+        mask_enr_cell = np.zeros([self.number_of_cells], dtype=bool)
         mask_enr_cell[enr_cell] = True
         # Calcul energie interne & pression
-        self.compute_new_pressure(self, mask_enr_cell, delta_t)
+        self.compute_new_pressure(mask_enr_cell, delta_t)
 
 
     def reconstruct_enriched_hydro_field(self, classical_field: Field, enriched_field_name: str):
@@ -925,7 +927,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         # Porosity
         self._enr_porosity.increment_values()
 
-    def compute_enriched_elements_new_coordinates(self, topology, node_coord, disc_opening):
+    def compute_new_coordinates(self, topology, node_coord):
         """
         Compute the coordinates of the cell center
         :param topology : mesh connectivity
@@ -935,8 +937,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         mask = self.enriched
         self._coordinates_x = node_coord[:-1, 0] + self.size_t_plus_dt / 2.
         cell_coord_from_right = node_coord[1:, 0] - self.size_t_plus_dt / 2.
-        self._coordinates_x[mask] += (- self.size_t_plus_dt[mask] - disc_opening[mask]
+        self._coordinates_x[mask] += (- self.size_t_plus_dt[mask]
                                       + self._left_part_size.new_value[mask]) / 2.
         self._enr_coordinates_x[mask] = cell_coord_from_right[mask] + \
-            (self.size_t_plus_dt[mask] - self._right_part_size.new_value[mask] \
-                + disc_opening[mask]) / 2.
+            (self.size_t_plus_dt[mask] - self._right_part_size.new_value[mask]) / 2.
