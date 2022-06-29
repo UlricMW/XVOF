@@ -180,7 +180,7 @@ class EnrichElement(RuptureTreatment):
                             cells.cohesive_dissipated_energy[cell_tb_desenr] = disc.energy_to_be_dissipated - disc.dissipated_energy.new_value
                             # Initialisation de la partie droite des champs + cell size
                             self.cancel_cracked_cell_size(cells, cell_tb_desenr, disc)
-                            nodes.cancel_additional_node_dof(disc)
+                            #nodes.cancel_additional_node_dof(disc)
                             cells.cancel_additional_cell_dof(disc, delta_t, yield_stress_model, shear_modulus_model)
                             enr_cell = disc.get_ruptured_cell_id
                             mask_enr_cell = np.zeros([cells.number_of_cells], dtype=bool)

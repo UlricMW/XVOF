@@ -178,36 +178,20 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         self.porosity.new_value[enr_cell] = self.size_t_plus_dt[enr_cell]/denominateur_new_value
         self.porosity.current_value[enr_cell] = self.size_t[enr_cell]/denominateur_current_value
 
-        # Calcul nouvelle pseudo viscosité 
-        self.compute_new_pseudo(delta_t, mask_enr_cell)
-
         # Calcul module de cisaillement
         self.compute_shear_modulus(shear_modulus_model, mask_enr_cell)
 
         # Calcul yield stress
         self.compute_yield_stress(yield_stress_model, mask_enr_cell)
 
-        # Calcul deviatoric stress
-        self._enr_deviatoric_stress_current[enr_cell] = \
-            1./2.*(self._deviatoric_stress_current[enr_cell]+self.enr_deviatoric_stress_current[enr_cell])
-        self._enr_deviatoric_stress_new[enr_cell] = \
-            1./2.*(self._deviatoric_stress_new[enr_cell]+self.enr_deviatoric_stress_new[enr_cell])
+        # Calcul nouvelle pseudo viscosité 
+        self.compute_new_pseudo(delta_t, mask_enr_cell)
 
         # Calcul deformation plastique equivalente
         self.equivalent_plastic_strain.current_value[enr_cell] = \
             1./2.*(self.equivalent_plastic_strain.current_value[enr_cell]+self.enr_equivalent_plastic_strain.current_value[enr_cell])
         self.equivalent_plastic_strain.new_value[enr_cell] = \
             1./2.*(self.equivalent_plastic_strain.new_value[enr_cell]+self.enr_equivalent_plastic_strain.new_value[enr_cell])
-
-        # Other quantities initialization
-        #self._deviatoric_strain_rate[enr_cell] = \
-        #    1./2.*(self._deviatoric_strain_rate[enr_cell] + self.enr_deviatoric_strain_rate[enr_cell])
-        #self._stress[enr_cell] = 1./2.*(self._enr_stress[enr_cell]+self._stress[enr_cell])
-        #self._equivalent_plastic_strain_rate[enr_cell] = \
-        #    1./2.*(self._equivalent_plastic_strain_rate[enr_cell]+self._enr_equivalent_plastic_strain_rate[enr_cell])
-
-        # Calcul energie interne & pression
-        #self.compute_new_pressure(self, mask_enr_cell, delta_t)
 
     def reclassical_pressure(self, disc, delta_t):
         enr_cell = disc.get_ruptured_cell_id
