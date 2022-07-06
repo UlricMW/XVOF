@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from xfv.post_processing.tools.hdf5_postprocessing_tools import get_field_evolution_in_time_for_item
-
+from xfv.src.output_manager.outputdatabaseexploit import OutputDatabaseExploit
+from xfv.post_processing.tools.hdf5_postprocessing_tools import _field_at_time_at_item
 
 def run():
     """
@@ -80,20 +81,53 @@ def run():
             args.item_ids[0] = [i for i in range(number_cells1, number_cells2+1)]
 
         for item_id in args.item_ids[0]:
+            my_hd = OutputDatabaseExploit(path_to_db)
+
+    # ----------------------------------------------------------------
+    # Get the final number of created discontinuities
+    # ----------------------------------------------------------------
+            final_cell_status = my_hd.extract_field_at_time("EnrichmentStatus", my_hd.saved_times[-1])
             # Read database :
-            item_history = get_field_evolution_in_time_for_item(path_to_db, item_id, field)
+            item_time = []
+            item_history = []
+            add_item_history = []
+            i = 0
+            j = 0
+            for time in my_hd.saved_times[:]:
+                cell_status = my_hd.extract_field_at_time("CellStatus", my_hd.saved_times[i])
+                number_ruptured_cell = np.where(cell_status[:item_id])[0]
+                number_ruptured_cell = len(number_ruptured_cell)
+                if not number_ruptured_cell :
+                    number_ruptured_cell = 0
+                item_time.append(float(time* 1.e+6))
+                item_history.append(_field_at_time_at_item(my_hd, item_id+number_ruptured_cell, field, time))
+                if ~cell_status[item_id]:
+                    add_item_history.append(item_history[-1])
+                else:
+                    add_item_history.append(_field_at_time_at_item(my_hd, item_id+number_ruptured_cell+1, field, time))
+                i += 1
+                if i%(len(my_hd.saved_times[:])/10)==0:
+                    j += 1
+                    print("exécuté à ",j*10, " %")
             if args.verbose:
                 print("Done !")
                 print("~~~~~~~~~~~~~")
             # Plot field :
-            plt.plot(item_history[:, 0] * 1.e+6, item_history[:, 1], '.-', label= 'cell n°'+ str(item_id))
+            plt.plot(item_time , item_history, '.-', label= 'cell n°'+ str(item_id))
+            plt.plot(item_time , add_item_history, '.-', label= 'cell n°'+ str(item_id) + ' (additionnal)') 
             if args.write_data:
                 data_path = f"Field_evolution_{field}_at_cell_{item_id}.dat"
                 #data_path = pathlib.Path.cwd().joinpath(case, f"Field_evolution_{field}_{item_id}.txt")
                 with open(data_path, "w") as file_object:
-                    for x_data, y_data in zip(item_history[:, 0], item_history[:, 1]):
+                    for x_data, y_data in zip(item_time, item_history):
                         file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
                 print("Data written in {:s}".format(data_path))
+                if final_cell_status:
+                    data_path = f"Field_evolution_additional_{field}_at_cell_{item_id}.dat"
+                    with open(data_path, "w") as file_object:
+                        for x_data, y_data in zip(item_time, add_item_history):
+                            file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
+                    print("Data written in {:s}".format(data_path))
 
 
 if __name__ == "__main__":

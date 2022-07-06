@@ -404,6 +404,12 @@ def main(directory: Path) -> None:
         #         TIME STEP COMPUTATION                #
         # ---------------------------------------------#
         dt_crit = my_mesh.compute_new_time_step()
+        dt_history = dt
+        if data.time.is_smoothing_time_step:
+            if data.time.percent_max_time is not None:
+                percent = data.time.percent_max_time
+                if dt_crit > (1 + percent)*dt_history:
+                    dt_crit = (1 + percent)*dt_history
         if dt > dt_crit:
             dt = min(dt, dt_crit)  # pylint: disable=invalid-name
         # ---------------------------------------------#

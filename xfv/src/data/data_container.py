@@ -77,6 +77,8 @@ class TimeProps(TypeCheckedDataClass):
     final_time: float
     is_time_step_constant: bool
     time_step_reduction_factor_for_failure: Optional[float]
+    is_smoothing_time_step: Optional[bool]
+    percent_max_time: Optional[float]
 
     def __post_init__(self):
         super().__post_init__()
@@ -271,7 +273,7 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         initial_interface_position = params.get('initial-interface-position', 0.)
         return section, initial_interface_position
 
-    def __fill_in_time_props(self) -> Tuple[float, float, bool, Optional[float]]:
+    def __fill_in_time_props(self) -> Tuple[float, float, bool, Optional[float], Optional[bool], Optional[float]]:
         """
         Returns the quantities needed to fill time properties
             - initial time step
@@ -284,7 +286,9 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         final_time: float = params['final-time']
         cst_dt: bool = params.get('constant-time-step', False)
         time_step_reduction: Optional[float] = params.get('time-step-reduction-factor-for-failure')
-        return initial_time_step, final_time, cst_dt, time_step_reduction
+        lissage: Optional[bool] = params.get('smoothing-time-step', False)
+        percent_max_time: Optional[float] = params.get('percent-smoothing-time-step')
+        return initial_time_step, final_time, cst_dt, time_step_reduction, lissage, percent_max_time
 
     def __fill_in_output_props(self) -> Tuple[int, bool, List[DatabaseProps], List[str]]:
         """

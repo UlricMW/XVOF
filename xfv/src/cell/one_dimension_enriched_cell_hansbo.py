@@ -173,10 +173,10 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
             self.mass[enr_cell]/(self.size_t_plus_dt[enr_cell]*self.data.geometric.section)
 
         # Calcul de la porosité
-        denominateur_new_value = self.left_part_size.new_value[enr_cell]/self.porosity.new_value[enr_cell] + self.right_part_size.new_value[enr_cell]/self.enr_porosity.new_value[enr_cell]
-        denominateur_current_value = self.left_part_size.current_value[enr_cell]/self.porosity.current_value[enr_cell] + self.right_part_size.current_value[enr_cell]/self.enr_porosity.current_value[enr_cell]
-        self.porosity.new_value[enr_cell] = self.size_t_plus_dt[enr_cell]/denominateur_new_value
-        self.porosity.current_value[enr_cell] = self.size_t[enr_cell]/denominateur_current_value
+        #denominateur_new_value = self.left_part_size.new_value[enr_cell]/self.porosity.new_value[enr_cell] + self.right_part_size.new_value[enr_cell]/self.enr_porosity.new_value[enr_cell]
+        #denominateur_current_value = self.left_part_size.current_value[enr_cell]/self.porosity.current_value[enr_cell] + self.right_part_size.current_value[enr_cell]/self.enr_porosity.current_value[enr_cell]
+        #self.porosity.new_value[enr_cell] = (self.size_t_plus_dt[enr_cell] - disc.discontinuity_opening.new_value[0])/denominateur_new_value
+        #self.porosity.current_value[enr_cell] = (self.size_t[enr_cell] + disc.discontinuity_opening.current_value[0])/denominateur_current_value 
 
         # Calcul module de cisaillement
         self.compute_shear_modulus(shear_modulus_model, mask_enr_cell)
