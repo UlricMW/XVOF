@@ -38,10 +38,13 @@ def run():
     # Prepare figure
     # ----------------------------------------------------------
     plt.figure(1)
-    plt.title("Evolution of the cohesive law", fontweight='bold', fontsize=18)
-    plt.xlabel("discontinuity opening [m]", fontsize=16)
-    plt.ylabel("cohesive force []", fontsize=16)
-
+    #plt.title("Evolution of the cohesive law", fontweight='bold', fontsize=18)
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.xlabel("discontinuity opening [m]", fontsize=13)
+    plt.ylabel("cohesive force [Pa]", fontsize=13)
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
 
     # ----------------------------------------------------------
     # Read discontinuity opening for each cell
@@ -68,12 +71,15 @@ def run():
                     except KeyError:  # 1ere fois que la maille est enrichie => init list opening
                         opening_dict[cell_id] = [[time, op]]
                         force_dict[cell_id] = [[time, force]]
-        
-    # Permet de selectionner les item_ids pour toutes les cellules enrichies
-    if args.item_ids[0][0] == 1000:
-        args.item_ids[0] = []
-        args.item_ids[0] = opening[:,0]
-        print(args.item_ids[0])
+        enriched_status = hd_band.extract_field_at_time("EnrichmentStatus", hd_band.saved_times[-1])[:]
+
+        # ----------------------------------------------------------
+        # # Permet de selectionner les item_ids pour toutes les cellules enrichies
+        # ----------------------------------------------------------         
+        if args.item_ids[0][0] == 1000:
+            args.item_ids[0] = []
+            print('id =', np.where(enriched_status)[0])
+            args.item_ids[0] = np.where(enriched_status)[0]
 
     #Transformation en array
     for key in opening_dict:
@@ -84,14 +90,15 @@ def run():
 
     for item_id in args.item_ids[0]:
         # Read database :
-        j = 0.
-        for ane in opening[:, 0]:
+        j = False
+        for ane in np.where(enriched_status)[0]:
             if ane == item_id:
-                j += 1.
-                if j < 0.99:
-                    print(opening[:, 0])
-                    exit(f'Choissisez item_ids dans la liste ci-dessus')
-            # Plot field :
+                j = True
+        print('it_id =', item_id)
+        if not j:
+            print(np.where(enriched_status)[0])
+            exit(f'item_ids selectionné ne fait pas parti de la liste des cellules enrichies. Choississez item_ids (ie. le numéro de cellules) dans la liste ci-dessus ou tapez 1000 pour selectionner toutes les cellules')
+        # Plot field :
         plt.plot(opening_dict[item_id][:,1],force_dict[item_id][:,1], '+', label= 'cell n°'+str(item_id))
 
         if args.write_data:
@@ -100,12 +107,16 @@ def run():
                 for x_data, y_data in zip(opening_dict[item_id][:,1], force_dict[item_id][:,1]):
                     file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
             print("Data written in {:s}".format(data_path))
+            plt.grid()
+            plt.legend(loc="best")
+            plt.savefig(f"Field_evolution_cohesive_law_{item_id}.png",dpi=300)
+            print("figure saved in {:s}".format(f"Field_evolution_cohesive_law_{item_id}.png"))
 
 if __name__ == "__main__":
     run()
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
-    plt.grid()
-    plt.legend(loc="best")
+    #plt.grid()
+    #plt.legend(loc="best")
     plt.show()

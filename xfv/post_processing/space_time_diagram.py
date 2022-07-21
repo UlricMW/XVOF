@@ -54,6 +54,8 @@ def show_figure(fig, min_field: float, max_field: float):
         color_bar.set_label(ARGS.field, fontsize=18)
     # Show plot
     plt.legend()
+    plt.savefig(f"space_time_diagram_evolution_additional_{ARGS.field}.png",dpi=300)
+    print("figure saved in {:s}".format(f"space_time_diagram_evolution_additional_{ARGS.field}.png"))
     plt.show()
 
 
@@ -70,6 +72,7 @@ def run():
     final_cell_status = my_hd.extract_field_at_time("EnrichmentStatus", my_hd.saved_times[-1])
     ruptured_cell_id_before_offset = np.where(final_cell_status)[0]
     ruptured_cell_id_before_offset = np.sort(ruptured_cell_id_before_offset)
+    print('ruptured_cell_id_before_offset = ',ruptured_cell_id_before_offset)
     real_final_cell_status = my_hd.extract_field_at_time("CellStatus", my_hd.saved_times[-1])
     real_ruptured_cell_id_before_offset = np.where(real_final_cell_status)[0]
     real_ruptured_cell_id_before_offset = np.sort(real_ruptured_cell_id_before_offset)

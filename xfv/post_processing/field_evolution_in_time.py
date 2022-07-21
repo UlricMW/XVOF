@@ -58,8 +58,12 @@ def run():
     field_unit["YieldStress"] = "[$Pa$]"
     
     plt.figure(1)
-    plt.xlabel(r"Time [$\mu s$]")
-    plt.ylabel(field + field_unit[field])
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.xlabel(r"Time [$\mu s$]", fontsize=13)
+    plt.ylabel(field + field_unit[field], fontsize=13)
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
 
     # ----------------------------------------------------------
     # Plot field evolution for each case
@@ -106,7 +110,7 @@ def run():
                 else:
                     add_item_history.append(_field_at_time_at_item(my_hd, item_id+number_ruptured_cell+1, field, time))
                 i += 1
-                if i%(len(my_hd.saved_times[:])/10)==0:
+                if i%(int(len(my_hd.saved_times[:])/10)) == 0:
                     j += 1
                     print("exécuté à ",j*10, " %")
             if args.verbose:
@@ -128,13 +132,16 @@ def run():
                         for x_data, y_data in zip(item_time, add_item_history):
                             file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
                     print("Data written in {:s}".format(data_path))
-
-
+                plt.grid()
+                plt.legend(loc="best")
+                #plt.show()
+                plt.savefig(f"Field_evolution_additional_{field}_at_cell_{item_id}.png",dpi=300)
+                print("figure saved in {:s}".format(f"Field_evolution_additional_{field}_at_cell_{item_id}.png"))
 if __name__ == "__main__":
     run()
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
-    plt.grid()
-    plt.legend(loc="best")
+    #plt.grid()
+    #plt.legend(loc="best")
     plt.show()

@@ -39,10 +39,13 @@ def run():
     # Prepare figure
     # ----------------------------------------------------------
     plt.figure(1)
-    plt.title("Evolution of the discontinuity opening", fontweight='bold', fontsize=18)
-    plt.xlabel(r"Time $[\mu s]$", fontsize=16)
-    plt.ylabel("Discontinuity opening [m]", fontsize=16)
-
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+    #plt.title("Evolution of the discontinuity opening", fontweight='bold', fontsize=18)
+    plt.xlabel(r"Time $[\mu s]$", fontsize=13)
+    plt.ylabel("Discontinuity opening [m]", fontsize=13)
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
 
     # ----------------------------------------------------------
     # Read discontinuity opening for each cell
@@ -64,13 +67,15 @@ def run():
                         opening_dict[cell_id].append([time, op])
                     except KeyError:  # 1ere fois que la maille est enrichie => init list opening
                         opening_dict[cell_id] = [[time, op]]
+        enriched_status = hd_band.extract_field_at_time("EnrichmentStatus", hd_band.saved_times[-1])[:]
 
         # ----------------------------------------------------------
         # Permet d'aficher les energies dissipées pour toutes les cellules
         # ----------------------------------------------------------         
         if args.item_ids[0][0] == 1000:
             args.item_ids[0] = []
-            args.item_ids[0] = opening_dict[:,0]
+            print('id =', np.where(enriched_status)[0])
+            args.item_ids[0] = np.where(enriched_status)[0]
 
         #Transformation en array
         for key in opening_dict:
@@ -80,21 +85,25 @@ def run():
 
         for item_id in args.item_ids[0]:
             # Read database :
-            j = 0.
-            for ane in opening[:, 0]:
+            j = False
+            for ane in np.where(enriched_status)[0]:
                 if ane == item_id:
-                    j += 1.
-            if j < 0.99:
-                print(opening[:, 0])
+                    j = True
+            if not j:
+                print(np.where(enriched_status)[0])
                 exit(f'item_ids selectionné ne fait pas parti de la liste des cellules enrichies. Choississez item_ids (ie. le numéro de cellules) dans la liste ci-dessus ou tapez 1000 pour selectionner toutes les cellules')
             # Plot field :
-            plt.plot(opening_dict[item_id][:,0] * 1.e+6,opening_dict[item_id][:,1],label= 'cell n°'+str(item_id))
+            plt.plot(opening_dict[item_id][:,0] * 1.e+6,opening_dict[item_id][:,1], '.-', label= 'cell n°'+str(item_id))
             if args.write_data:
                 data_path = f"Field_evolution_discontinuity_at_cell_{item_id}.dat"
                 with open(data_path, "w") as file_object:
                     for x_data, y_data in zip(opening_dict[item_id][:,0], opening_dict[item_id][:,1]):
                         file_object.write("{:20.18g}\t{:20.18g}\n".format(x_data, y_data))
                 print("Data written in {:s}".format(data_path))
+                plt.grid()
+                plt.legend(loc="best")
+                plt.savefig(f"Field_evolution_discontinuity_at_cell_{item_id}.png",dpi=300)
+                print("figure saved in {:s}".format(f"Field_evolution_discontinuity_at_cell_{item_id}.png"))
 
         # Ouverture min / max :
 
@@ -106,6 +115,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------
     # Show figure
     # ----------------------------------------------------------
-    plt.grid()
-    plt.legend(loc="best")
+    #plt.grid()
+    #plt.legend(loc="best")
     plt.show()
