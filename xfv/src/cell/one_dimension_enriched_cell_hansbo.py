@@ -155,9 +155,9 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
         self._enr_equivalent_plastic_strain_rate[enr_cell] = \
             np.copy(self._equivalent_plastic_strain_rate[enr_cell])
 
-    def cancel_additional_cell_dof(self, disc: Discontinuity, delta_t, yield_stress_model, shear_modulus_model):
+    def recomputation_density(self,  disc: Discontinuity):
         """
-        Values to initialize the right part fields when discontinuity disc is created
+        Compute density for cells where rupture is cancelled
 
         :param disc: the current discontinuity
         """
@@ -171,12 +171,19 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
             self.mass[enr_cell]/(self.size_t[enr_cell]*self.data.geometric.section)
         self.density.new_value[enr_cell] = \
             self.mass[enr_cell]/(self.size_t_plus_dt[enr_cell]*self.data.geometric.section)
+ 
+    def recomputation_plasticity_module(self, disc: Discontinuity, delta_t, yield_stress_model, shear_modulus_model):
+        """
+        Values to initialize the right part fields when discontinuity disc is created
 
-        # Calcul de la porosité
-        #denominateur_new_value = self.left_part_size.new_value[enr_cell]/self.porosity.new_value[enr_cell] + self.right_part_size.new_value[enr_cell]/self.enr_porosity.new_value[enr_cell]
-        #denominateur_current_value = self.left_part_size.current_value[enr_cell]/self.porosity.current_value[enr_cell] + self.right_part_size.current_value[enr_cell]/self.enr_porosity.current_value[enr_cell]
-        #self.porosity.new_value[enr_cell] = (self.size_t_plus_dt[enr_cell] - disc.discontinuity_opening.new_value[0])/denominateur_new_value
-        #self.porosity.current_value[enr_cell] = (self.size_t[enr_cell] + disc.discontinuity_opening.current_value[0])/denominateur_current_value 
+        :param disc: the current discontinuity
+        :param delta_t: time increment
+        :param yield_stress_model: class for yield stress
+        :param shear_modulus_model: class for shear_modulus_model
+        """
+        enr_cell = disc.get_ruptured_cell_id
+        mask_enr_cell = np.zeros([self.number_of_cells], dtype=bool)
+        mask_enr_cell[enr_cell] = True
 
         # Calcul module de cisaillement
         self.compute_shear_modulus(shear_modulus_model, mask_enr_cell)
@@ -544,6 +551,7 @@ class OneDimensionHansboEnrichedCell(OneDimensionCell):  # pylint: disable=too-m
             delta_t,
                 self.enr_porosity.current_value[mask_enr_evol_porosity],
                 self.enr_pressure.current_value[mask_enr_evol_porosity])
+        self._enr_porosity.new_value = np.minimum(self._enr_porosity.new_value, porosity_model.maximal_porosity_for_Johnson)
 
     def compute_enriched_elements_new_pressure(self, delta_t):
         """

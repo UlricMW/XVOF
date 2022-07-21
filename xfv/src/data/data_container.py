@@ -190,6 +190,12 @@ class FailureModelProps(TypeCheckedDataClass):
     failure_criterion: Optional[RuptureCriterionProps]
     failure_criterion_value: Optional[float]
     failure_criterion_index: Optional[int]
+    deleting_enrichment_module: Optional[bool]
+    deleting_value_criterion_max: Optional[float]
+    deleting_value_criterion_min: Optional[float]
+    recomputation_porosity_module: Optional[bool]
+    recomputation_porosity_method: Optional[str]
+    reaffected_porosity_value: Optional[float]
 
     def __post_init__(self):
         super().__post_init__()  # typecheck first
@@ -571,14 +577,20 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             *self.__get_rheology_props(material))
 
         # Failure treatment
-        failure_treatment, failure_treatment_value, lump_mass_matrix = (
-            self.__get_failure_props(material))
+        (failure_treatment, failure_treatment_value, lump_mass_matrix,
+            deleting_enrichment_module, deleting_value_criterion_max, 
+            deleting_value_criterion_min, recomputation_porosity_module, 
+            recomputation_porosity_method,reaffected_porosity_value) = (
+                self.__get_failure_props(material))
         failure_criterion, failure_criterion_value, failure_index = (
             self.__get_failure_criterion_props(material))
 
         failure = FailureModelProps(failure_treatment, failure_treatment_value,
-                                    lump_mass_matrix, failure_criterion, failure_criterion_value,
-                                    failure_index)
+                                        lump_mass_matrix, failure_criterion, 
+                                        failure_criterion_value,failure_index, 
+                                        deleting_enrichment_module, deleting_value_criterion_max, 
+                                        deleting_value_criterion_min, recomputation_porosity_module, 
+                                        recomputation_porosity_method, reaffected_porosity_value)
 
         # Surface degradation behavior
         cohesive_model: Optional[CohesiveZoneModelProps] = self.__get_cohesive_model_props(material)
@@ -746,7 +758,8 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
 
     @staticmethod
     def __get_failure_props(matter: Any) -> Tuple[Optional[str], Optional[float],
-                                                  Optional[EnrichedMassMatrixProps]]:
+                                                  Optional[EnrichedMassMatrixProps],
+                                                  Optional[bool], Optional[float]]:
         """
         Returns the data needed to fill the FailureModel props
 
@@ -757,7 +770,7 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         """
         failure_data = matter.get('failure')
         if not failure_data:
-            return None, None, None
+            return None, None, None, False, None, None, False, None, None
 
         failure_treatment_data = matter['failure']['failure-treatment']
         failure_treatment = failure_treatment_data.get('name')
@@ -770,6 +783,26 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             if failure_treatment == "Enrichment":
                 # Choice of the enriched mass matrix lumping
                 lump_name: str = failure_treatment_data['lump-mass-matrix']
+                deleting_enrichment_module: Optional[bool] = failure_treatment_data.get('deleting-enrichment-module', False)
+                deleting_value_criterion_max: Optional[float] = failure_treatment_data.get('deleting-value-criterion-max')
+                deleting_value_criterion_min: Optional[float] = failure_treatment_data.get('deleting-value-criterion-min')
+                recomputation_porosity_module: Optional[bool] = failure_treatment_data.get('recomputation-porosity-module', False)
+                reaffected_porosity_value: Optional[float] = failure_treatment_data.get('reaffected-porosity-value')
+                recomputation_porosity_method = None
+                if deleting_enrichment_module:
+                    if deleting_value_criterion_max is None or deleting_value_criterion_min is None:
+                        raise ValueError(f"deleting-enrichment-module is activated"
+                                "Please choose value for (deleting-value-criterion-max) and for (deleting-value-criterion-min)")
+                if recomputation_porosity_module:
+                    recomputation_porosity_method: Optional[str] = failure_treatment_data['recomputation-porosity-method'].lower()
+                    if (recomputation_porosity_method != 'distension-recomputation-method'
+                            and recomputation_porosity_method != 'reaffected-porosity-method'):
+                        raise ValueError(f"Unknown failure treatment {recomputation_porosity_method}."
+                                 "Please choose among (distension-recomputation-method, reaffected-porosity-method, left-porosity-method)")
+                    elif recomputation_porosity_method == 'reaffected-porosity-method':
+                        if reaffected_porosity_value is None: 
+                            raise ValueError(f"Lorsque reaffected-porosity-method est choisi, veuillez indiquer une "
+                                 "valeur de porosité à affecter dans reaffected-porosity-value ")
                 if lump_name.lower() == "menouillard":
                     lump_mass_matrix = LumpMenouillardMassMatrixProps()
                 elif lump_name.lower() == "somme":
@@ -788,7 +821,10 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
         else:
             failure_treatment_value = 0.
             lump_mass_matrix = None
-        return failure_treatment, failure_treatment_value, lump_mass_matrix
+        return (failure_treatment, failure_treatment_value, lump_mass_matrix,
+                    deleting_enrichment_module, deleting_value_criterion_max, 
+                    deleting_value_criterion_min, recomputation_porosity_module, 
+                    recomputation_porosity_method, reaffected_porosity_value)
 
     @staticmethod
     def __get_failure_criterion_props(matter) -> Tuple[

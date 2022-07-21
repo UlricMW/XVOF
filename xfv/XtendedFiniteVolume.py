@@ -207,7 +207,13 @@ def main(directory: Path) -> None:
     elif data.material_target.failure_model.failure_treatment == "Enrichment":
         rupture_treatment = EnrichElement(
             data.material_target.failure_model.failure_treatment_value,
-            data.material_target.failure_model.lump_mass_matrix)
+            data.material_target.failure_model.lump_mass_matrix,
+            data.material_target.failure_model.deleting_enrichment_module,
+            data.material_target.failure_model.deleting_value_criterion_max,
+            data.material_target.failure_model.deleting_value_criterion_min,
+            data.material_target.failure_model.recomputation_porosity_module,
+            data.material_target.failure_model.recomputation_porosity_method,
+            data.material_target.failure_model.reaffected_porosity_value)
     else:
         rupture_treatment = None
 
@@ -330,6 +336,14 @@ def main(directory: Path) -> None:
         # ---------------------------------------------#
         my_mesh.apply_contact_correction(dt)
         # ---------------------------------------------#
+        #                CANCEL RUPTURE                #
+        # ---------------------------------------------#
+        if rupture_treatment is not None:
+            if rupture_treatment.deleting_enrichment_module:
+                    my_mesh.preparation_reclassical(rupture_treatment)
+                    my_mesh.get_reclassical_cells()
+                    my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time, dt, target_yield_stress, target_shear_modulus)
+        # ---------------------------------------------#
         #         CELLS VOLUMES COMPUTATION            #
         # ---------------------------------------------#
         my_mesh.compute_new_cells_sizes(dt)
@@ -386,7 +400,7 @@ def main(directory: Path) -> None:
         my_mesh.compute_new_nodes_forces()
         my_mesh.compute_new_cohesive_forces()
         # ---------------------------------------------#
-        #                CANCEL RUPTURE                #
+        #      CANCEL RUPTURE AFTER UNLOADIND          #
         # ---------------------------------------------#
         if rupture_treatment is not None:
             if data.material_target.cohesive_model is not None:

@@ -616,6 +616,8 @@ class OneDimensionCell(Cell):  # pylint: disable=too-many-public-methods
                 self.pressure.current_value[self.evol_porosity])
         # Locking porosity for the cells where porosity can't change
         self.porosity.new_value[~self.evol_porosity] = self.porosity.current_value[~self.evol_porosity]
+        
+        self.porosity.new_value = np.minimum(self.porosity.new_value, porosity_model.maximal_porosity_for_Johnson)
 
     def compute_shear_modulus(self, shear_modulus_model, mask):
         """

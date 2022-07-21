@@ -3,6 +3,7 @@
 Base class for one dimensional enriched mesh
 """
 
+#from unittest import TextTestResult
 import numpy as np
 from xfv.src.cell.one_dimension_enriched_cell_hansbo import OneDimensionHansboEnrichedCell
 from xfv.src.node.one_dimension_enriched_node_hansbo import OneDimensionHansboEnrichedNode
@@ -203,6 +204,25 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         # Arrange mass matrix to get a structure : classical / enriched dof
         disc.mass_matrix_enriched.rearrange_dof_in_inv_mass_matrix()
         disc.has_mass_matrix_been_computed()
+
+    def preparation_reclassical(self, rup_treatment):
+        """
+        indicate cells where enrichment must be deleted
+
+        :param rup_treatment: rupture_treatment
+        """
+        disc_list = Discontinuity.discontinuity_list()
+        if len(disc_list) == 0:
+            return
+
+        for ind, disc in enumerate(disc_list):
+            derivee_disc = disc.discontinuity_opening.new_value[0] - disc.discontinuity_opening.current_value[0]
+            if (disc.discontinuity_opening.new_value[0] <= rup_treatment.deleting_value_criterion_max 
+                    and disc.discontinuity_opening.new_value[0] >= rup_treatment.deleting_value_criterion_min 
+                    and derivee_disc < 0.):
+                self.cells.compute_allow_porosity(disc.get_ruptured_cell_id)
+                self.cells.indicate_cells_to_be_desenr(disc.get_ruptured_cell_id)
+                self.cells.save_cohesive_energy_to_be_dissipated(disc)
 
     def apply_contact_correction(self, delta_t: float):
         """
@@ -488,6 +508,18 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
         :type treatment: RuptureTreatment
         """
         treatment.cancel_treatment(self.cells, self.__reclassical_cells,
+                                  self.nodes, self.__topology, time, 
+                                  delta_t, yield_stress_model, shear_modulus_model)
+
+    def cancel_rupture_treatment_soft(self, treatment, time: float, delta_t, yield_stress_model, shear_modulus_model):
+        """
+        cancel the rupture treatment on the cells enforcing the rupture criterion
+
+        :param treatment: rupture treatment
+        :param time: simulation time
+        :type treatment: RuptureTreatment
+        """
+        treatment.cancel_treatment_soft(self.cells, self.__reclassical_cells,
                                   self.nodes, self.__topology, time, 
                                   delta_t, yield_stress_model, shear_modulus_model)
 

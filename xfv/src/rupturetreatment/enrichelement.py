@@ -16,10 +16,19 @@ class EnrichElement(RuptureTreatment):
     __never_enriched = True
     __debug = False
 
-    def __init__(self, position_rupture: float, lump_matrix: EnrichedMassMatrixProps):
+    def __init__(self, position_rupture: float, lump_matrix: EnrichedMassMatrixProps,
+                 deleting_enrichment_module: bool, deleting_value_criterion_max: float, 
+                 deleting_value_criterion_min: float,recomputation_porosity_module: bool, 
+                 recomputation_porosity_method: str, reaffected_porosity_value: float):
         super(EnrichElement, self).__init__()
         self.__position_rupture = position_rupture
         self.__lump = lump_matrix
+        self.__deleting_enrichment_module = deleting_enrichment_module
+        self.__deleting_value_criterion_max = deleting_value_criterion_max
+        self.__deleting_value_criterion_min = deleting_value_criterion_min
+        self.__recomputation_porosity_module = recomputation_porosity_module
+        self.__recomputation_porosity_method = recomputation_porosity_method
+        self.__reaffected_porosity_value = reaffected_porosity_value
 
     @property
     def position_rupture(self) -> float:
@@ -34,6 +43,48 @@ class EnrichElement(RuptureTreatment):
         Accessor on the mass matrix lumping to be applied
         """
         return self.__lump
+
+    @property
+    def deleting_enrichment_module(self) -> bool:
+        """
+        Accessor on the boolean information about deleting enrichment module
+        """
+        return self.__deleting_enrichment_module
+
+    @property
+    def deleting_value_criterion_max(self) -> float:
+        """
+        Accessor on the maximal value for deleting enrichment
+        """
+        return self.__deleting_value_criterion_max
+
+    @property
+    def deleting_value_criterion_min(self) -> float:
+        """
+        Accessor on the minimum value for deleting enrichment
+        """
+        return self.__deleting_value_criterion_min
+
+    @property
+    def recomputation_porosity_module(self) -> bool:
+        """
+        Accessor on the boolean information about recomputation porosity model
+        """
+        return self.__recomputation_porosity_module
+
+    @property
+    def recomputation_porosity_method(self) -> str:
+        """
+        Accessor on the string information about recomputation porosity method to use
+        """
+        return self.__recomputation_porosity_method
+
+    @property
+    def reaffected_porosity_value(self) -> float:
+        """
+        Accessor on the porosity value for reaafected porosity method
+        """
+        return self.__reaffected_porosity_value
 
     def apply_treatment(self, cells, ruptured_cells, nodes, topology, time, cohesive_model, section):
         """
@@ -130,6 +181,26 @@ class EnrichElement(RuptureTreatment):
         cells.size_t_plus_dt[cell_tb_desenr] = cells.right_part_size.new_value[cell_tb_desenr] + cells.left_part_size.new_value[cell_tb_desenr] + disc.discontinuity_opening.new_value[0]
         cells.size_t[cell_tb_desenr] = cells.right_part_size.current_value[cell_tb_desenr] + cells.left_part_size.current_value[cell_tb_desenr] + disc.discontinuity_opening.current_value[0]
 
+    def recompute_porosity(self, disc, cells):
+        """
+        Compute the porosity of of the newly desenriched cell
+
+        :param disc: discontinuity to delete
+        :param cells: cell collection
+        """
+        enr_cell = disc.get_ruptured_cell_id
+        if self.recomputation_porosity_method == 'distension-recomputation-method':
+            denominateur_new_value = (cells.left_part_size.new_value[enr_cell]/cells.porosity.new_value[enr_cell] + 
+                                        cells.right_part_size.new_value[enr_cell]/cells.enr_porosity.new_value[enr_cell])
+            denominateur_current_value = (cells.left_part_size.current_value[enr_cell]/cells.porosity.current_value[enr_cell] + 
+                                            cells.right_part_size.current_value[enr_cell]/cells.enr_porosity.current_value[enr_cell])
+            cells.porosity.new_value[enr_cell] = cells.size_t_plus_dt[enr_cell]/denominateur_new_value
+            cells.porosity.current_value[enr_cell] = cells.size_t[enr_cell]/denominateur_current_value 
+
+        elif self.recomputation_porosity_method == 'reaffected-porosity-method':
+            cells.porosity.new_value[enr_cell] = np.minimum(self.reaffected_porosity_value, cells.porosity.new_value[enr_cell])
+            cells.porosity.current_value[enr_cell] = np.minimum(self.reaffected_porosity_value, cells.porosity.current_value[enr_cell])
+
     def cancel_treatment(self, cells, reclassical_cells, nodes, topology, time, delta_t, yield_stress_model, shear_modulus_model):
         """
         Cancel the rupture treatment by enriching one of the cells that is marked as ruptured cells
@@ -181,13 +252,73 @@ class EnrichElement(RuptureTreatment):
                             # Initialisation de la partie droite des champs + cell size
                             self.cancel_cracked_cell_size(cells, cell_tb_desenr, disc)
                             #nodes.cancel_additional_node_dof(disc)
-                            cells.cancel_additional_cell_dof(disc, delta_t, yield_stress_model, shear_modulus_model)
+                            cells.recomputation_density(disc)
+                            self.recompute_porosity(disc, cells)
+                            cells.recomputation_plasticity_module(disc, delta_t, yield_stress_model, shear_modulus_model)
                             enr_cell = disc.get_ruptured_cell_id
                             mask_enr_cell = np.zeros([cells.number_of_cells], dtype=bool)
                             mask_enr_cell[enr_cell] = True
                             cells.compute_deviatoric_stress_tensor(mask_enr_cell, topology,
                                                     nodes.xtpdt, nodes.upundemi, delta_t)
                             cells.reclassical_pressure(disc, delta_t)
+                            exit
+
+                    bool_no_disc_ind = list(range(0,len(Discontinuity.discontinuity_list())))
+                    bool_no_disc_ind = bool_no_disc_ind != disc_id*np.ones(len(Discontinuity.discontinuity_list()))
+                    del Discontinuity.discontinuity_list()[disc_id]
+                    Discontinuity.enr_velocity_new = Discontinuity.enr_velocity_new[bool_no_disc_ind]
+                    Discontinuity.enr_coordinates_current = Discontinuity.enr_coordinates_current[bool_no_disc_ind]
+                    Discontinuity.enr_coordinates_new = Discontinuity.enr_coordinates_new[bool_no_disc_ind]
+                    Discontinuity.enr_force = Discontinuity.enr_force[bool_no_disc_ind]
+                    Discontinuity.discontinuity_position = Discontinuity.discontinuity_position[bool_no_disc_ind]
+                    Discontinuity.ruptured_cell_id = Discontinuity.ruptured_cell_id[bool_no_disc_ind]
+                    Discontinuity.in_nodes = Discontinuity.in_nodes[bool_no_disc_ind]
+                    Discontinuity.out_nodes = Discontinuity.out_nodes[bool_no_disc_ind]
+                    cells.classical[cell_tb_desenr] = True
+                else:
+                    raise NotImplementedError("""Cell {:} is already desenriched.
+                    Impossible to desenrich it twice""". format(cell_tb_desenr))
+
+        reclassical_cells[:] = False
+
+    def cancel_treatment_soft(self, cells, reclassical_cells, nodes, topology, time, delta_t, yield_stress_model, shear_modulus_model):
+        """
+        Cancel the rupture treatment by enriching one of the cells that is marked as ruptured cells
+
+        :param cells: array of all cells
+        :param ruptured_cells: boolean array marking the ruptured cells
+        :param nodes: array of all nodes
+        :param topology: topology of the problem
+        :param time:
+        :param cohesive_model: class for the cohesive model
+        :param section: float for section of material
+        """
+        if reclassical_cells.any():  # Enrichment is made once for all
+            cells_to_be_desenr = np.logical_and(reclassical_cells, ~cells.classical)
+
+            for cell_tb_desenr in np.nonzero(cells_to_be_desenr)[0]:
+                if cells.enriched[cell_tb_desenr]:
+                    print("---------------------------------------------")
+                    print("New reclassical cell detected. "
+                          "Starting desenrichment process for cell {:}".format(cell_tb_desenr))
+                    print("Beginning desenrichment sequence at time {:}".format(time))
+                    print("==> Desenrichment of cell : ", cell_tb_desenr)
+                    # Identify nodes to be desenriched
+                    nodes_to_be_desenr = topology.nodes_belonging_to_cell[cell_tb_desenr]
+                    in_nodes = np.zeros(nodes.number_of_nodes, dtype=bool, order="C")
+                    out_nodes = np.zeros(nodes.number_of_nodes, dtype=bool, order="C")
+                    in_nodes[nodes_to_be_desenr[0]] = True
+                    out_nodes[nodes_to_be_desenr[1]] = True
+                    print("==> Desenrichment of nodes : ", nodes_to_be_desenr.flatten())
+                    print("==> In nodes : ", np.nonzero(in_nodes))
+                    print("==> Out nodes : ", np.nonzero(out_nodes))
+                    nodes.classical[nodes_to_be_desenr] = True
+                    for inds, disc in enumerate(Discontinuity.discontinuity_list()):
+                        if disc.get_ruptured_cell_id == cell_tb_desenr:
+                            disc_id = inds
+                            print('energy to be diss =', disc.energy_to_be_dissipated)
+                            print('energy dissipated =', disc.dissipated_energy.new_value)
+                            cells.cohesive_dissipated_energy[cell_tb_desenr] = disc.energy_to_be_dissipated - disc.dissipated_energy.new_value
                             exit
 
                     bool_no_disc_ind = list(range(0,len(Discontinuity.discontinuity_list())))
