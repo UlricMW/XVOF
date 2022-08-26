@@ -103,8 +103,8 @@ def run():
     # ----------------------------------------------------------------
     if ARGS.verbose:
         print("Plot the color map")
-    print('nombre cellules rompues = ', len(ruptured_cell_id_before_offset))
-    print('nombre cellules rompues au temps final = ', len(real_ruptured_cell_id_before_offset))
+    print('nombre cellules enrichies durant l essai = ', len(ruptured_cell_id_before_offset))
+    print('nombre cellules au statut enrichi au temps final = ', len(real_ruptured_cell_id_before_offset))
     # Apparition des disc :
     if len(ruptured_cell_id_before_offset) >= 1:
         # Tracé jusqu'au temps d'appartion des disc :

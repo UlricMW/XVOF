@@ -24,7 +24,7 @@ class LinearPercent(CohesiveCalculationModel) :  # pylint: disable=too-few-publi
         :cohesive_model: type of cohesive model 
         """
 
-        critical_strength = float(abs(stress[ind, 0]))
+        critical_strength = float((stress[ind, 0]))
         dissipated_energy = float(energy[ind]*mass[ind]*cohesive_model.purcentage)
         critical_separation = float(2.*dissipated_energy/(critical_strength*section))
         print('critical strength =', critical_strength)

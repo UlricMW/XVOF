@@ -221,8 +221,9 @@ class Mesh1dEnriched:  # pylint:disable=too-many-instance-attributes, too-many-p
                     and disc.discontinuity_opening.new_value[0] >= rup_treatment.deleting_value_criterion_min 
                     and derivee_disc < 0.):
                 self.cells.compute_allow_porosity(disc.get_ruptured_cell_id)
-                self.cells.indicate_cells_to_be_desenr(disc.get_ruptured_cell_id)
-                self.cells.save_cohesive_energy_to_be_dissipated(disc)
+                if disc.energy_to_be_dissipated >= disc.dissipated_energy.new_value[0]:
+                    self.cells.indicate_cells_to_be_desenr(disc.get_ruptured_cell_id)
+                    self.cells.save_cohesive_energy_to_be_dissipated(disc)
 
     def apply_contact_correction(self, delta_t: float):
         """

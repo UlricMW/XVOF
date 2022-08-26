@@ -47,15 +47,12 @@ class CouplingUnloading(UnloadingModelBase):  # pylint: disable=too-few-public-m
             #print('b pour cellule ', cell_id)
             cells.compute_allow_porosity(cell_id)
             cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
-        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] >= 1.05:
-            #print('c pour cellule ', cell_id)
-            cells.compute_allow_porosity(cell_id)
-            cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
-        elif new_opening <= self.porosity_unload_criterion and cells.porosity.new_value[cell_id] < 1.05:
+        elif new_opening <= self.porosity_unload_criterion:
             #print('d pour cellule ', cell_id)
             cells.compute_allow_porosity(cell_id)
-            cells.indicate_cells_to_be_desenr(cell_id)
-            cells.save_cohesive_energy_to_be_dissipated(disc)
+            if disc.energy_to_be_dissipated >= disc.dissipated_energy.new_value:
+                cells.indicate_cells_to_be_desenr(cell_id)
+                cells.save_cohesive_energy_to_be_dissipated(disc)
             cohesive_force = self.cohesive_unload_model.compute_unloading_reloading_condition(disc, new_opening, cells)
 
         return cohesive_force
