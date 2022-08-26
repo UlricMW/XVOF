@@ -814,13 +814,25 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             # Case ImposedPressure :
             elif failure_treatment == "ImposedPressure":
                 lump_mass_matrix = None
-
+                deleting_enrichment_module = False
+                deleting_value_criterion_max = None
+                deleting_value_criterion_min = None
+                recomputation_porosity_module = False
+                reaffected_porosity_value = None
+                recomputation_porosity_method = None
             else:
                 raise ValueError(f"Unknown failure treatment {failure_treatment}."
                                  "Please choose among (ImposedPressure, Enrichment)")
         else:
             failure_treatment_value = 0.
             lump_mass_matrix = None
+            lump_mass_matrix = None
+            deleting_enrichment_module = False
+            deleting_value_criterion_max = None
+            deleting_value_criterion_min = None
+            recomputation_porosity_module = False
+            reaffected_porosity_value = None
+            recomputation_porosity_method = None
         return (failure_treatment, failure_treatment_value, lump_mass_matrix,
                     deleting_enrichment_module, deleting_value_criterion_max, 
                     deleting_value_criterion_min, recomputation_porosity_module, 
