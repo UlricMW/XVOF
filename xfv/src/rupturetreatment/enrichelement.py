@@ -21,6 +21,7 @@ class EnrichElement(RuptureTreatment):
                  deleting_value_criterion_min: float,recomputation_porosity_module: bool, 
                  recomputation_porosity_method: str, reaffected_porosity_value: float):
         super(EnrichElement, self).__init__()
+        self.__name = 'Enrichment'
         self.__position_rupture = position_rupture
         self.__lump = lump_matrix
         self.__deleting_enrichment_module = deleting_enrichment_module
@@ -50,6 +51,13 @@ class EnrichElement(RuptureTreatment):
         Accessor on the boolean information about deleting enrichment module
         """
         return self.__deleting_enrichment_module
+
+    @property
+    def name(self) -> str:
+        """
+        Accessor on the name about rupture treatment
+        """
+        return self.__name
 
     @property
     def deleting_value_criterion_max(self) -> float:

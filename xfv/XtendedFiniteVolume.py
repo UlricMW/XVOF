@@ -336,14 +336,6 @@ def main(directory: Path) -> None:
         # ---------------------------------------------#
         my_mesh.apply_contact_correction(dt)
         # ---------------------------------------------#
-        #                CANCEL RUPTURE                #
-        # ---------------------------------------------#
-        if rupture_treatment is not None:
-            if rupture_treatment.deleting_enrichment_module:
-                    my_mesh.preparation_reclassical(rupture_treatment)
-                    my_mesh.get_reclassical_cells()
-                    my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time, dt, target_yield_stress, target_shear_modulus)
-        # ---------------------------------------------#
         #         CELLS VOLUMES COMPUTATION            #
         # ---------------------------------------------#
         my_mesh.compute_new_cells_sizes(dt)
@@ -407,6 +399,16 @@ def main(directory: Path) -> None:
                 if data.material_target.cohesive_model.unloading_model.unloading_model_name == "coupling_unloading":
                     my_mesh.get_reclassical_cells()
                     my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time, dt, target_yield_stress, target_shear_modulus)
+        # ---------------------------------------------#
+        #                CANCEL RUPTURE                #
+        # ---------------------------------------------#
+        if rupture_treatment is not None:
+            if rupture_treatment.name == 'Enrichment':
+                if rupture_treatment.deleting_enrichment_module:
+                        my_mesh.preparation_reclassical(rupture_treatment)
+                        my_mesh.get_reclassical_cells()
+                        my_mesh.cancel_rupture_treatment(rupture_treatment, simulation_time, dt, 
+                                                        target_yield_stress, target_shear_modulus)
         # ---------------------------------------------#
         #         LOADING                              #
         # ---------------------------------------------#

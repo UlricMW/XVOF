@@ -11,6 +11,7 @@ class ImposedPressure(RuptureTreatment):  # pylint: disable=too-few-public-metho
     """
     def __init__(self, pressure):
         self.__imposed_pressure = pressure
+        self.name = 'ImposedPressure'
 
     def apply_treatment(self, cells, ruptured_cells, *args, **kwargs):
         """

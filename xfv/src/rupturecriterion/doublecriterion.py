@@ -14,11 +14,20 @@ class DoubleCriterion(RuptureCriterion):   # pylint: disable=too-few-public-meth
     """
     A rupture criterion based on porosity value
     """
-    def __init__(self, p_limit, number_cell, criterion_name):
+    def __init__(self, p_limit, is_rupture_in_traction_only,is_one_rupture,
+                    minimum_traction_stress, number_cell, criterion_name):
         #super().__init__()
         self.__limit_porosity = p_limit
+        self._minimum_traction_stress = minimum_traction_stress
         self._number_cell = number_cell
-        self.criterion_one = HalfRodComparisonCriterion(number_cell)
+        self._is_rupture_in_traction_only = is_rupture_in_traction_only
+        self._is_one_rupture = is_one_rupture
+
+        if is_rupture_in_traction_only:
+            self.rupture_in_traction_only_criterion = MaximalStressCriterion(minimum_traction_stress)
+        if is_one_rupture:
+            self.one_rupture_criterion = HalfRodComparisonCriterion(number_cell)
+
         if criterion_name == "porositycriterion":
             self.criterion_two = PorosityCriterion(p_limit)
         elif criterion_name == "maximalstresscriterion":
@@ -31,8 +40,18 @@ class DoubleCriterion(RuptureCriterion):   # pylint: disable=too-few-public-meth
         :param cells: cells on which to check the criterion
         :return: the mask of the cells where porosity is above the threshold porosity and cell_id equal cell_id input
         """
+        array_rupture_in_traction_only =np.ones(len(cells.pressure.new_value), dtype=bool)
+        array_one_rupture = np.ones(len(cells.pressure.new_value), dtype=bool)
+
+        if self._is_rupture_in_traction_only:
+            array_rupture_in_traction_only = self.rupture_in_traction_only_criterion.check_criterion(cells)
+
+        if self._is_one_rupture:
+            array_one_rupture = self.one_rupture_criterion.check_criterion(cells)
         
-        array_criterion_one = self.criterion_one.check_criterion(cells)
+        mixte_array = np.logical_and(array_rupture_in_traction_only, array_one_rupture)
+
+        array_criterion_one = np.logical_or(mixte_array, ~cells.already_enr)
         array_criterion_two = self.criterion_two.check_criterion(cells)
     
         return np.logical_and(array_criterion_one, array_criterion_two)

@@ -106,6 +106,9 @@ class NonLocalStressCriterionProps(RuptureCriterionProps):
 @dataclass  # pylint: disable=missing-class-docstring
 class DoubleCriterionProps(RuptureCriterionProps):
     p_limit: Optional[float]
+    is_rupture_in_traction_only: Optional[bool]
+    is_one_rupture: Optional[bool]
+    minimum_traction_stress: Optional[float]
     number_cell: Optional[int]  # optional to personalize the error message
     criterion_name: Optional[str]
     _rupture_criterion_class = DoubleCriterion

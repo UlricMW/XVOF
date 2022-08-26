@@ -859,9 +859,13 @@ class DataContainer(metaclass=Singleton):  # pylint: disable=too-few-public-meth
             failure_criterion = NonLocalStressCriterionProps(fail_crit_value, radius)
         elif fail_crit_name == 'DoubleCriterion':
             criterion_value : Optional[float] = failure_criterion_data.get('criterion-value')
+            is_rupture_in_traction_only: Optional[bool] = failure_criterion_data.get('is-rupture-in-traction-only', False)
+            is_one_rupture: Optional[bool] = failure_criterion_data.get('is-one-rupture', False)
+            criterion_name : Optional[str] = failure_criterion_data['criterion-name'].lower()            
+            minimum_traction_stress = failure_criterion_data.get('minimum-traction-stress')
             cell_id : Optional[int] = failure_criterion_data.get('cell-id')
-            criterion_name : Optional[str] = failure_criterion_data['criterion-name'].lower()
-            failure_criterion = DoubleCriterionProps(criterion_value, cell_id, criterion_name)
+            failure_criterion = DoubleCriterionProps(criterion_value, is_rupture_in_traction_only, is_one_rupture, minimum_traction_stress,
+                                                         cell_id, criterion_name)
             if criterion_name != "porositycriterion" and criterion_name != "maximalstresscriterion":
                 raise ValueError(f"Unknown failure criterion {criterion_name}. "
                              "Please choose among (PorosityCriterion, MaximalStressCriterion")      
